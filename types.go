@@ -26,3 +26,17 @@ const (
 	SignECDSAWithSHA          SignAlgo = src.CtxSignECDSAWithSHA
 	SignDSTU4145WithDSTU7564  SignAlgo = src.CtxSignDSTU4145WithDSTU7564
 )
+
+type CA struct {
+	IssuerCNs              []string `json:"issuerCNs"`
+	Address                string   `json:"address"`
+	OCSPAccessPointAddress string   `json:"ocspAccessPointAddress"`
+	OCSPAccessPointPort    string   `json:"ocspAccessPointPort"`
+	CmpAddress             string   `json:"cmpAddress"`
+	TSPAddress             string   `json:"tspAddress"`
+	TSPAddressPort         string   `json:"tspAddressPort"`
+	DirectAccess           bool     `json:"directAccess"`
+	QSCDSNInCert           bool     `json:"qscdSNInCert"`
+	CertsInKey             bool     `json:"certsInKey"`
+	CMPCompatibility       int      `json:"cmpCompatibility"`
+}

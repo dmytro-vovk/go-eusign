@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/dmytro-vovk/go-eusign"
-	"github.com/kr/pretty"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,8 +18,7 @@ func TestNew(t *testing.T) {
 
 	pk, info, err := signer.LoadPrivateKey("data/Key-6.dat", "12345")
 	require.NoError(t, err)
+	require.NotNil(t, pk)
 
-	_ = pk
-
-	t.Logf("Key info: %+v", pretty.Formatter(info))
+	t.Logf("Key info: %+v", info)
 }

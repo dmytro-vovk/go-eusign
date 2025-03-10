@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/dmytro-vovk/go-eusign/internal/src"
@@ -66,14 +67,6 @@ func NewSigner(casFile, caCertFile string, options ...Option) (*Signer, error) {
 
 	return &Signer{cas: cas}, err
 }
-
-const (
-	DefaultTSPAddress = "acskidd.gov.ua"
-	DefaultTSPPort    = "80"
-
-	DefaultOCSPAddress = "czo.gov.ua"
-	DefaultOCSPPort    = "80"
-)
 
 func applyDefaults() error {
 	if need, err := wrapError2(src.DoesNeedSetSettings()); err != nil {
@@ -154,20 +147,6 @@ func loadCAs(fileName string) ([]CA, error) {
 	return cas, nil
 }
 
-type CA struct {
-	IssuerCNs              []string `json:"issuerCNs"`
-	Address                string   `json:"address"`
-	OCSPAccessPointAddress string   `json:"ocspAccessPointAddress"`
-	OCSPAccessPointPort    string   `json:"ocspAccessPointPort"`
-	CmpAddress             string   `json:"cmpAddress"`
-	TSPAddress             string   `json:"tspAddress"`
-	TSPAddressPort         string   `json:"tspAddressPort"`
-	DirectAccess           bool     `json:"directAccess"`
-	QSCDSNInCert           bool     `json:"qscdSNInCert"`
-	CertsInKey             bool     `json:"certsInKey"`
-	CMPCompatibility       int      `json:"cmpCompatibility"`
-}
-
 func (s *Signer) Finalize() error {
 	return wrapError(src.Finalize())
 }
@@ -188,7 +167,7 @@ func (s *Signer) Hash(data []byte, algo HashAlgo) ([]byte, error) {
 	return hash, nil
 }
 
-func (s *Signer) LoadPrivateKey(fileName, password string) (*src.PrivateKeyContext, *src.CertOwnerInfo, error) {
+func (s *Signer) LoadPrivateKey(fileName, password string) ([]byte, *src.CertInfoEx, error) {
 	// Read private key
 
 	keyData, err := os.ReadFile(fileName)
@@ -210,7 +189,7 @@ func (s *Signer) LoadPrivateKey(fileName, password string) (*src.PrivateKeyConte
 	)
 
 	for _, ca := range s.cas {
-		if ca.CmpAddress == "" {
+		if ca.CmpAddress == "" || !strings.Contains(ca.CmpAddress, "test") {
 			continue
 		}
 
@@ -274,11 +253,16 @@ func (s *Signer) LoadPrivateKey(fileName, password string) (*src.PrivateKeyConte
 	}
 
 	{
-		pkCtx, keyInfo, err := src.CtxReadPrivateKeyBinary(ctx, keyData, password)
+		pkCtx, _, err := src.CtxReadPrivateKeyBinary(ctx, keyData, password)
 		if err := wrapError(err); err != nil {
 			return nil, nil, fmt.Errorf("read private key binary: %w", err)
 		}
 
-		return pkCtx, keyInfo, nil
+		infoEx, cert, err := src.CtxGetOwnCertificate(pkCtx, src.CertKeyTypeDSTU4145, src.KeyUsageKeyAgreement)
+		if err := wrapError(err); err != nil {
+			return nil, nil, fmt.Errorf("get own certificate: %w", err)
+		}
+
+		return cert, infoEx, nil
 	}
 }
