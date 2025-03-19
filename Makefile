@@ -13,6 +13,9 @@ lint:
 	@go mod tidy
 	@golangci-lint run
 
+build:
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build ./...
+
 .PHONY:
 refresh:
 	@wget https://iit.com.ua/download/productfiles/CACertificates.p7b -O data/CACertificates.p7b

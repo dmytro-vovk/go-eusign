@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/dmytro-vovk/go-eusign"
-	"github.com/dmytro-vovk/go-eusign/internal/src"
+	src "github.com/dmytro-vovk/go-eusign/src"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

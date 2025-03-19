@@ -6,10 +6,9 @@ import (
 	"io"
 	"log"
 	"os"
-	"strings"
 	"sync"
 
-	"github.com/dmytro-vovk/go-eusign/internal/src"
+	src "github.com/dmytro-vovk/go-eusign/src"
 )
 
 type Signer struct {
@@ -167,7 +166,7 @@ func (s *Signer) Hash(data []byte, algo HashAlgo) ([]byte, error) {
 	return hash, nil
 }
 
-func (s *Signer) LoadPrivateKey(fileName, password string) ([]byte, *src.CertInfoEx, error) {
+func (s *Signer) LoadPrivateKey(fileName, password, cn string) ([]byte, *src.CertInfoEx, error) {
 	// Read private key
 
 	keyData, err := os.ReadFile(fileName)
@@ -188,35 +187,52 @@ func (s *Signer) LoadPrivateKey(fileName, password string) ([]byte, *src.CertInf
 		m          sync.Mutex
 	)
 
-	for _, ca := range s.cas {
-		if ca.CmpAddress == "" || !strings.Contains(ca.CmpAddress, "test") {
-			continue
+	if cn != "" {
+		for _, ca := range s.cas {
+			for _, icn := range ca.IssuerCNs {
+				if icn == cn {
+					if ca.CmpAddress != "" {
+						pkCertsCMP, err = wrapError2(src.GetCertificatesByKeyInfo(info, []string{ca.CmpAddress}, []string{"80"}))
+						if err != nil {
+							return nil, nil, err
+						}
+					}
+
+					break
+				}
+			}
+		}
+	} else {
+		for _, ca := range s.cas {
+			// if ca.CmpAddress == "" || !strings.Contains(ca.CmpAddress, "test") {
+			// 	continue
+			// }
+
+			wg.Add(1)
+			go func(addr string) {
+				defer wg.Done()
+
+				pkc, err := wrapError2(src.GetCertificatesByKeyInfo(info, []string{addr}, []string{"80"}))
+				if err != nil {
+					// log.Printf("Get private key certificate from %s: %v", addr, err)
+
+					return
+				}
+
+				m.Lock()
+
+				if pkCertsCMP == nil {
+					pkCertsCMP = pkc
+
+					log.Printf("Got private key certificate from %s", addr)
+				}
+
+				m.Unlock()
+			}(ca.CmpAddress)
 		}
 
-		wg.Add(1)
-		go func(addr string) {
-			defer wg.Done()
-
-			pkc, err := wrapError2(src.GetCertificatesByKeyInfo(info, []string{addr}, []string{"80"}))
-			if err != nil {
-				// log.Printf("Get private key certificate from %s: %v", addr, err)
-
-				return
-			}
-
-			m.Lock()
-
-			if pkCertsCMP == nil {
-				pkCertsCMP = pkc
-
-				log.Printf("Got private key certificate from %s", addr)
-			}
-
-			m.Unlock()
-		}(ca.CmpAddress)
+		wg.Wait()
 	}
-
-	wg.Wait()
 
 	if pkCertsCMP == nil {
 		return nil, nil, fmt.Errorf("could not get private key certificate")

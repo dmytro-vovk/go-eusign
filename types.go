@@ -1,6 +1,6 @@
 package eusign
 
-import "github.com/dmytro-vovk/go-eusign/internal/src"
+import src "github.com/dmytro-vovk/go-eusign/src"
 
 type HashAlgo int
 

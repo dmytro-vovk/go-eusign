@@ -1,15 +1,15 @@
-// =============================================================================
+//=============================================================================
 
 // Package euscp implements
-package src
+package euscp
 
 // #cgo CFLAGS:
-// #cgo CXXFLAGS: -g -Wall
+// #cgo CXXFLAGS: -g -Wall 
 // #cgo linux CXXFLAGS: -DOS_NIX
 // #cgo darwin CXXFLAGS: -DOS_NIX
-// #cgo LDFLAGS: -ldl -L${SRCDIR}/lib
+// #cgo LDFLAGS: -ldl -L${SRCDIR}/lib 
 // #cgo linux LDFLAGS: -losi
-// #cgo darwin LDFLAGS: -Wl,-rpath,${SRCDIR}/lib/darwin -losi
+// #cgo darwin LDFLAGS: -Wl,-rpath,${SRCDIR}/lib -losi
 // #include <stdlib.h>
 // #include "Module.h"
 import (
@@ -19,45 +19,45 @@ import (
 	"unsafe"
 )
 
-// =============================================================================
+//=============================================================================
 
 var lang = LangDefault
 
-// =============================================================================
+//=============================================================================
 
 // Initialize using library
 func Initialize() (
-	error Error) {
+		error Error) {
 	cError := C.Initialize()
 
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // Finalize using library
 func Finalize() (
-	error Error) {
+		error Error) {
 	cError := C.Finalize()
 
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // IsInitialized check the status of the library
 func IsInitialized() (
-	isInitialized bool) {
+		isInitialized bool) {
 	cIsInitialized := C.IsInitialized()
 
 	return (cIsInitialized != 0)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // DoesNeedSetSettings gets signs of the need to set parameters
 func DoesNeedSetSettings() (
-	doesNeedSetSettings bool, error Error) {
+		doesNeedSetSettings bool, error Error) {
 	var cDoesNeedSetSettings C.int
 
 	cError := C.DoesNeedSetSettings(&cDoesNeedSetSettings)
@@ -68,11 +68,11 @@ func DoesNeedSetSettings() (
 	return (cDoesNeedSetSettings != 0), makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetFileStoreSettings gets file store settings
 func GetFileStoreSettings() (
-	settings *FileStoreSettings, error Error) {
+		settings *FileStoreSettings, error Error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -87,11 +87,11 @@ func GetFileStoreSettings() (
 	return settings, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SetFileStoreSettings sets file store settings
 func SetFileStoreSettings(settings *FileStoreSettings) (
-	error Error) {
+		error Error) {
 	cSettings, cSettingsSize := encodeFileStoreSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -103,11 +103,11 @@ func SetFileStoreSettings(settings *FileStoreSettings) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetProxySettings gets proxy settings
 func GetProxySettings() (
-	settings *ProxySettings, error Error) {
+		settings *ProxySettings, error Error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -122,11 +122,11 @@ func GetProxySettings() (
 	return settings, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SetProxySettings sets proxy settings
 func SetProxySettings(settings *ProxySettings) (
-	error Error) {
+		error Error) {
 	cSettings, cSettingsSize := encodeProxySettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -138,11 +138,11 @@ func SetProxySettings(settings *ProxySettings) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetOCSPSettings gets OCSP settings
 func GetOCSPSettings() (
-	settings *OCSPSettings, error Error) {
+		settings *OCSPSettings, error Error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -157,11 +157,11 @@ func GetOCSPSettings() (
 	return settings, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SetOCSPSettings sets OCSP settings
 func SetOCSPSettings(settings *OCSPSettings) (
-	error Error) {
+		error Error) {
 	cSettings, cSettingsSize := encodeOCSPSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -173,11 +173,11 @@ func SetOCSPSettings(settings *OCSPSettings) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetOCSPAccessInfoModeSettings gets OCSP access info mode settings
 func GetOCSPAccessInfoModeSettings() (
-	settings *OCSPAccessInfoModeSettings, error Error) {
+		settings *OCSPAccessInfoModeSettings, error Error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -192,11 +192,11 @@ func GetOCSPAccessInfoModeSettings() (
 	return settings, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SetOCSPAccessInfoModeSettings sets OCSP access info mode settings
 func SetOCSPAccessInfoModeSettings(settings *OCSPAccessInfoModeSettings) (
-	error Error) {
+		error Error) {
 	cSettings, cSettingsSize := encodeOCSPAccessInfoModeSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -208,11 +208,11 @@ func SetOCSPAccessInfoModeSettings(settings *OCSPAccessInfoModeSettings) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // EnumOCSPAccessInfoSettings enums OCSP access info settings
 func EnumOCSPAccessInfoSettings(index int) (
-	settings *OCSPAccessInfoSettings, error Error) {
+		settings *OCSPAccessInfoSettings, error Error) {
 	cIndex := C.ulong(index)
 	var cSettings **C.char
 	var cSettingsSize C.ulong
@@ -229,11 +229,11 @@ func EnumOCSPAccessInfoSettings(index int) (
 	return settings, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetOCSPAccessInfoSettings gets ocsp access info settings
 func GetOCSPAccessInfoSettings(issuerCN string) (
-	settings *OCSPAccessInfoSettings, error Error) {
+		settings *OCSPAccessInfoSettings, error Error) {
 	cIssuerCN := C.CString(issuerCN)
 	defer C.free(unsafe.Pointer(cIssuerCN))
 	var cSettings **C.char
@@ -251,11 +251,11 @@ func GetOCSPAccessInfoSettings(issuerCN string) (
 	return settings, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SetOCSPAccessInfoSettings sets ocsp access info settings
 func SetOCSPAccessInfoSettings(settings *OCSPAccessInfoSettings) (
-	error Error) {
+		error Error) {
 	cSettings, cSettingsSize := encodeOCSPAccessInfoSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -267,11 +267,11 @@ func SetOCSPAccessInfoSettings(settings *OCSPAccessInfoSettings) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // DeleteOCSPAccessInfoSettings delete ocsp access info settings
 func DeleteOCSPAccessInfoSettings(issuerCN string) (
-	error Error) {
+		error Error) {
 	cIssuerCN := C.CString(issuerCN)
 	defer C.free(unsafe.Pointer(cIssuerCN))
 
@@ -283,11 +283,11 @@ func DeleteOCSPAccessInfoSettings(issuerCN string) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetTSPSettings gets TSP settings
 func GetTSPSettings() (
-	settings *TSPSettings, error Error) {
+		settings *TSPSettings, error Error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -302,11 +302,11 @@ func GetTSPSettings() (
 	return settings, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SetTSPSettings sets TSP settings
 func SetTSPSettings(settings *TSPSettings) (
-	error Error) {
+		error Error) {
 	cSettings, cSettingsSize := encodeTSPSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -318,11 +318,11 @@ func SetTSPSettings(settings *TSPSettings) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetLDAPSettings gets LDAP settings
 func GetLDAPSettings() (
-	settings *LDAPSettings, error Error) {
+		settings *LDAPSettings, error Error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -337,11 +337,11 @@ func GetLDAPSettings() (
 	return settings, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SetLDAPSettings sets LDAP settings
 func SetLDAPSettings(settings *LDAPSettings) (
-	error Error) {
+		error Error) {
 	cSettings, cSettingsSize := encodeLDAPSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -353,11 +353,11 @@ func SetLDAPSettings(settings *LDAPSettings) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetCMPSettings gets CMP settings
 func GetCMPSettings() (
-	settings *CMPSettings, error Error) {
+		settings *CMPSettings, error Error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -372,11 +372,11 @@ func GetCMPSettings() (
 	return settings, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SetCMPSettings sets CMP settings
 func SetCMPSettings(settings *CMPSettings) (
-	error Error) {
+		error Error) {
 	cSettings, cSettingsSize := encodeCMPSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -388,11 +388,11 @@ func SetCMPSettings(settings *CMPSettings) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetLogSettings gets log settings
 func GetLogSettings() (
-	settings *LogSettings, error Error) {
+		settings *LogSettings, error Error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -407,11 +407,11 @@ func GetLogSettings() (
 	return settings, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SetLogSettings sets log settings
 func SetLogSettings(settings *LogSettings) (
-	error Error) {
+		error Error) {
 	cSettings, cSettingsSize := encodeLogSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -423,11 +423,11 @@ func SetLogSettings(settings *LogSettings) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetModeSettings gets mode settings
 func GetModeSettings() (
-	settings *ModeSettings, error Error) {
+		settings *ModeSettings, error Error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -442,11 +442,11 @@ func GetModeSettings() (
 	return settings, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SetModeSettings sets mode settings
 func SetModeSettings(settings *ModeSettings) (
-	error Error) {
+		error Error) {
 	cSettings, cSettingsSize := encodeModeSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -458,12 +458,12 @@ func SetModeSettings(settings *ModeSettings) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SetRuntimeParameterInt configures integer runtime
 // parameters of the cryptographic library
 func SetRuntimeParameterInt(name string, value int) (
-	error Error) {
+		error Error) {
 	cName := C.CString(name)
 	defer C.free(unsafe.Pointer(cName))
 
@@ -476,12 +476,12 @@ func SetRuntimeParameterInt(name string, value int) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SetRuntimeParameterBool configures boolean runtime
 // parameters of the cryptographic library
 func SetRuntimeParameterBool(name string, value bool) (
-	error Error) {
+		error Error) {
 	cName := C.CString(name)
 	defer C.free(unsafe.Pointer(cName))
 
@@ -494,12 +494,12 @@ func SetRuntimeParameterBool(name string, value bool) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SetOCSPResponseExpireTime set the confidence interval value (in seconds)
 // to the OCSP response contained in the signed data
 func SetOCSPResponseExpireTime(expireTime int) (
-	error Error) {
+		error Error) {
 	cExpireTime := C.ulong(expireTime)
 
 	cError := C.SetOCSPResponseExpireTime(cExpireTime)
@@ -507,11 +507,11 @@ func SetOCSPResponseExpireTime(expireTime int) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SaveCertificate saves certificate
 func SaveCertificate(certificate []byte) (
-	error Error) {
+		error Error) {
 	cCertificate, cCertificateLength := cbuf(certificate)
 
 	cError := C.SaveCertificate(
@@ -520,11 +520,11 @@ func SaveCertificate(certificate []byte) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SaveCertificates saves certificates
 func SaveCertificates(certificates []byte) (
-	error Error) {
+		error Error) {
 	cCertificates, cCertificatesLength := cbuf(certificates)
 
 	cError := C.SaveCertificates(
@@ -533,11 +533,11 @@ func SaveCertificates(certificates []byte) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SaveCertificatesEx save certificates
 func SaveCertificatesEx(certificates []byte) (
-	error Error) {
+		error Error) {
 	cCertificates, cCertificatesLength := cbuf(certificates)
 
 	cError := C.SaveCertificatesEx(
@@ -546,11 +546,11 @@ func SaveCertificatesEx(certificates []byte) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // ParseCertificateEx gets certificate info
 func ParseCertificateEx(certificate []byte) (
-	info *CertInfoEx, error Error) {
+		info *CertInfoEx, error Error) {
 	cCertificate, cCertificateLength := cbuf(certificate)
 	var cInfo **C.char
 	var cInfoSize C.ulong
@@ -567,12 +567,12 @@ func ParseCertificateEx(certificate []byte) (
 	return info, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetCertificatesByKeyInfo gets certificates by key info using CMP servers
 func GetCertificatesByKeyInfo(privKeyInfo []byte, cmpServers []string,
 	cmpServersPorts []string) (
-	certs []byte, error Error) {
+		certs []byte, error Error) {
 	cPrivKeyInfo, cPrivKeyInfoSize := cbuf(privKeyInfo)
 	cCMPServers, cCMPServersSize := cStrings(cmpServers)
 	defer C.FreeStructFields(cCMPServers, cCMPServersSize)
@@ -596,11 +596,11 @@ func GetCertificatesByKeyInfo(privKeyInfo []byte, cmpServers []string,
 	return certs, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // EnumKeyMediaTypes enums key media types
 func EnumKeyMediaTypes(typeIndex int) (
-	typeDescription string, error Error) {
+		typeDescription string, error Error) {
 	cTypeIndex := C.ulong(typeIndex)
 	var cDescr *C.char
 
@@ -615,11 +615,11 @@ func EnumKeyMediaTypes(typeIndex int) (
 	return typeDescription, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // EnumKeyMediaDevices enums key media devices
 func EnumKeyMediaDevices(typeIndex int, deviceIndex int) (
-	deviceDescription string, error Error) {
+		deviceDescription string, error Error) {
 	cTypeIndex := C.ulong(typeIndex)
 	cDeviceIndex := C.ulong(deviceIndex)
 	var cDescr *C.char
@@ -636,16 +636,16 @@ func EnumKeyMediaDevices(typeIndex int, deviceIndex int) (
 	return deviceDescription, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // Generating a private key on key media
 func GeneratePrivateKey2(
-	keyMedia *KeyMedia, setKeyMediaPassword bool,
+	keyMedia *KeyMedia, setKeyMediaPassword bool, 
 	uaKeysType int, uaDSKeysSpec int, uaKEPKeysSpec int,
 	uaParamsPath string, intKeysType int, rsaKeysSpec int,
 	rsaParamsPath string, ecdsaKeysSpec int, ecdsaParamsPath string,
 	userInfo *UserInfo, addExtKeyUsages bool, extKeyUsages string) (
-	requests []RequestInfo, error Error) {
+		requests []RequestInfo, error Error) {
 	cKeyMedia, cKeyMediaSize := encodeKeyMedia(keyMedia)
 	defer C.FreeStructFields(cKeyMedia, cKeyMediaSize)
 	cUserInfo, cUserInfoSize := encodeUserInfo(userInfo)
@@ -672,7 +672,7 @@ func GeneratePrivateKey2(
 	var cRequestsSizes [4](C.ulong)
 	var cExtKeyUsages *C.char = nil
 
-	if addExtKeyUsages {
+	if addExtKeyUsages == true {
 		cExtKeyUsages = C.CString(extKeyUsages)
 		defer C.free(unsafe.Pointer(cExtKeyUsages))
 	}
@@ -692,7 +692,7 @@ func GeneratePrivateKey2(
 		return nil, makeError(cError, lang)
 	}
 
-	for i := range cRequests {
+	for i, _ := range cRequests {
 		if cRequests[i] != nil {
 			request := decodeRequestInfo(
 				cRequests[i], cRequestsSizes[i])
@@ -704,11 +704,11 @@ func GeneratePrivateKey2(
 	return requests, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // IsPrivateKeyReaded checks is private key readed to global library context
 func IsPrivateKeyReaded() (
-	isReaded bool, error Error) {
+		isReaded bool, error Error) {
 	var cIsPrivateKeyReaded C.int
 
 	cError := C.IsPrivateKeyReaded(&cIsPrivateKeyReaded)
@@ -719,11 +719,11 @@ func IsPrivateKeyReaded() (
 	return (cIsPrivateKeyReaded != 0), makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // ReadPrivateKey reads private key from key media to global library context
 func ReadPrivateKey(keyMedia *KeyMedia) (
-	info *CertOwnerInfo, error Error) {
+		info *CertOwnerInfo, error Error) {
 	cKeyMedia, cKeyMediaSize := encodeKeyMedia(keyMedia)
 	defer C.FreeStructFields(cKeyMedia, cKeyMediaSize)
 	var cInfo **C.char
@@ -741,21 +741,21 @@ func ReadPrivateKey(keyMedia *KeyMedia) (
 	return info, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // ResetPrivateKey resets private key global library context
 func ResetPrivateKey() (
-	error Error) {
+		error Error) {
 	cError := C.ResetPrivateKey()
 
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // CtxReadPrivateKey reads private key from key media
 func CtxReadPrivateKey(context *Context, keyMedia *KeyMedia) (
-	pkContext *PrivateKeyContext, info *CertOwnerInfo, error Error) {
+		pkContext *PrivateKeyContext, info *CertOwnerInfo, error Error) {
 	cKeyMedia, cKeyMediaSize := encodeKeyMedia(keyMedia)
 	defer C.FreeStructFields(cKeyMedia, cKeyMediaSize)
 	var cInfo **C.char
@@ -780,12 +780,12 @@ func CtxReadPrivateKey(context *Context, keyMedia *KeyMedia) (
 	return pkContext, info, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // CtxReadPrivateKeyBinary reads private key from binary data
 func CtxReadPrivateKeyBinary(
 	context *Context, privateKey []byte, password string) (
-	pkContext *PrivateKeyContext, info *CertOwnerInfo, error Error) {
+		pkContext *PrivateKeyContext, info *CertOwnerInfo, error Error) {
 	cPrivateKey, cPrivateKeySize := cbuf(privateKey)
 	cPassword := C.CString(password)
 	defer C.free(unsafe.Pointer(cPassword))
@@ -811,11 +811,11 @@ func CtxReadPrivateKeyBinary(
 	return pkContext, info, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // CtxFreePrivateKey frees private key
 func CtxFreePrivateKey(pkContext *PrivateKeyContext) (
-	error Error) {
+		error Error) {
 	if pkContext == nil {
 		return makeError(ErrorBadParameter, lang)
 	}
@@ -825,12 +825,12 @@ func CtxFreePrivateKey(pkContext *PrivateKeyContext) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // CtxGetOwnCertificate gets own certificate
 func CtxGetOwnCertificate(pkContext *PrivateKeyContext,
 	certKeyType int, keyUsage int) (
-	certInfoEx *CertInfoEx, cert []byte, error Error) {
+		certInfoEx *CertInfoEx, cert []byte, error Error) {
 	cCertKeyType := C.ulong(certKeyType)
 	cKeyUsage := C.ulong(keyUsage)
 	var cCertInfoEx **C.char
@@ -858,11 +858,11 @@ func CtxGetOwnCertificate(pkContext *PrivateKeyContext,
 	return certInfoEx, cert, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetKeyInfo gets key information to get key certificates from CMP
 func GetKeyInfo(keyMedia *KeyMedia) (
-	keyInfo []byte, error Error) {
+		keyInfo []byte, error Error) {
 	cKeyMedia, cKeyMediaSize := encodeKeyMedia(keyMedia)
 	defer C.FreeStructFields(cKeyMedia, cKeyMediaSize)
 	var cKeyInfo *C.uchar
@@ -880,11 +880,11 @@ func GetKeyInfo(keyMedia *KeyMedia) (
 	return keyInfo, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetKeyInfo gets key information to get key certificates from CMP
 func GetKeyInfoBinary(privateKey []byte, password string) (
-	keyInfo []byte, error Error) {
+		keyInfo []byte, error Error) {
 	cPrivateKey, cPrivateKeySize := cbuf(privateKey)
 	cPassword := C.CString(password)
 	defer C.free(unsafe.Pointer(cPassword))
@@ -904,11 +904,11 @@ func GetKeyInfoBinary(privateKey []byte, password string) (
 	return keyInfo, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // EnumJKSPrivateKeys enums the private keys in the JKS container
 func EnumJKSPrivateKeys(container []byte, index int) (
-	keyAlias string, error Error) {
+		keyAlias string, error Error) {
 	cContainer, cContainerLength := cbuf(container)
 	cIndex := C.ulong(index)
 	var cKeyAlias *C.char
@@ -925,11 +925,11 @@ func EnumJKSPrivateKeys(container []byte, index int) (
 	return keyAlias, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetJKSPrivateKey gets the private key from the JKS container
 func GetJKSPrivateKey(container []byte, keyAlias string) (
-	privateKey []byte, certificates [][]byte, error Error) {
+		privateKey []byte, certificates [][]byte, error Error) {
 	cContainer, cContainerLength := cbuf(container)
 	cKeyAlias := C.CString(keyAlias)
 	defer C.free(unsafe.Pointer(cKeyAlias))
@@ -951,19 +951,19 @@ func GetJKSPrivateKey(container []byte, keyAlias string) (
 		unsafe.Pointer(cPrivateKey), C.int(cPrivateKeySize))
 	C.FreeMemory(cPrivateKey)
 
-	certificates = gobufs(cCertificatesCount,
+	certificates = gobufs(cCertificatesCount, 
 		cCertificates, cCertificatesSizes)
-	C.FreeCertificatesArray(cCertificatesCount,
+	C.FreeCertificatesArray(cCertificatesCount, 
 		cCertificates, cCertificatesSizes)
 
 	return privateKey, certificates, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // CtxHashData hashes data with context
 func CtxHashData(context *Context, hashAlgo int, data []byte) (
-	hash []byte, error Error) {
+		hash []byte, error Error) {
 	cData, cDataSize := cbuf(data)
 	cHashAlgo := C.ulong(hashAlgo)
 	var cHash *C.uchar
@@ -985,17 +985,17 @@ func CtxHashData(context *Context, hashAlgo int, data []byte) (
 	return hash, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetSignType gets information about the signature type
 func GetSignType(signIndex int, sign []byte) (
-	signType int, error Error) {
+		signType int, error Error) {
 	cSign, cSignLength := cbuf(sign)
 	cSignIndex := C.ulong(signIndex)
 	var cSignType C.ulong
 
 	cError := C.GetSignType(cSignIndex,
-		cSign, cSignLength, &cSignType)
+		cSign, cSignLength, &cSignType);
 	if cError != ErrorNone {
 		return 0, makeError(cError, lang)
 	}
@@ -1003,11 +1003,11 @@ func GetSignType(signIndex int, sign []byte) (
 	return int(cSignType), makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetSignsCount returns number of signers from signature
 func GetSignsCount(sign []byte) (
-	signsCount int, error Error) {
+		signsCount int, error Error) {
 	cSign, cSignSize := cbuf(sign)
 	var cSignsCount C.ulong
 
@@ -1019,17 +1019,17 @@ func GetSignsCount(sign []byte) (
 	return int(cSignsCount), makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetSigner gets the signer from signature
 func GetSigner(signIndex int, sign []byte) (
-	signerInfo []byte, error Error) {
+		signerInfo []byte, error Error) {
 	cSign, cSignLength := cbuf(sign)
 	cSignIndex := C.ulong(signIndex)
 	var cSignerInfo *C.uchar
 	var cSignerInfoLength C.ulong
 
-	cError := C.GetSigner(cSignIndex,
+	cError := C.GetSigner(cSignIndex, 
 		cSign, cSignLength, &cSignerInfo, &cSignerInfoLength)
 	if cError != ErrorNone {
 		return nil, makeError(cError, lang)
@@ -1042,11 +1042,11 @@ func GetSigner(signIndex int, sign []byte) (
 	return signerInfo, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetSignerInfo gets signer information from sign for signIndex
 func GetSignerInfo(signIndex int, sign []byte) (
-	certInfoEx *CertInfoEx, cert []byte, error Error) {
+		certInfoEx *CertInfoEx, cert []byte, error Error) {
 	cSignIndex := C.ulong(signIndex)
 	cSign, cSignSize := cbuf(sign)
 	var cCertInfoEx **C.char
@@ -1070,11 +1070,11 @@ func GetSignerInfo(signIndex int, sign []byte) (
 	return certInfoEx, cert, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // VerifyDataSpecific verifies sign of data for signIndex signer
 func VerifyDataSpecific(data []byte, signIndex int, sign []byte) (
-	signInfo *SignerInfo, error Error) {
+		signInfo *SignerInfo, error Error) {
 	cData, cDataSize := cbuf(data)
 	cSignIndex := C.ulong(signIndex)
 	cSign, cSignSize := cbuf(sign)
@@ -1094,11 +1094,11 @@ func VerifyDataSpecific(data []byte, signIndex int, sign []byte) (
 	return signInfo, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // VerifyDataInternalSpecific verifies sign for signIndex signer
 func VerifyDataInternalSpecific(signIndex int, sign []byte) (
-	signInfo *SignerInfo, data []byte, error Error) {
+		signInfo *SignerInfo, data []byte, error Error) {
 	cSignIndex := C.ulong(signIndex)
 	cSign, cSignSize := cbuf(sign)
 	var cData *C.uchar
@@ -1122,11 +1122,11 @@ func VerifyDataInternalSpecific(signIndex int, sign []byte) (
 	return signInfo, data, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // VerifyHashSpecific verifies sign of hash for signIndex signer
 func VerifyHashSpecific(hash []byte, signIndex int, sign []byte) (
-	signInfo *SignerInfo, error Error) {
+		signInfo *SignerInfo, error Error) {
 	cHash, cHashSize := cbuf(hash)
 	cSignIndex := C.ulong(signIndex)
 	cSign, cSignSize := cbuf(sign)
@@ -1146,11 +1146,11 @@ func VerifyHashSpecific(hash []byte, signIndex int, sign []byte) (
 	return signInfo, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // CreateEmptySign creates an empty signature
 func CreateEmptySign(data []byte) (
-	sign []byte, error Error) {
+		sign []byte, error Error) {
 	var cData *C.uchar
 	var cDataLength C.ulong
 	var cSign *C.uchar
@@ -1170,13 +1170,13 @@ func CreateEmptySign(data []byte) (
 	return sign, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
-// AppendValidationDataToSignerEx Adds additional verification
+// AppendValidationDataToSignerEx Adds additional verification 
 // information to the signer information
 func AppendValidationDataToSignerEx(previousSigner []byte,
 	certificate []byte, signType int) (
-	signerInfo []byte, error Error) {
+		signerInfo []byte, error Error) {
 	cPreviousSigner, cPreviousSignerLength := cbuf(previousSigner)
 	cCertificate, cCertificateLength := cbuf(certificate)
 	cSignType := C.ulong(signType)
@@ -1198,11 +1198,11 @@ func AppendValidationDataToSignerEx(previousSigner []byte,
 	return signerInfo, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // AppendSigner adds information about the signer to the signature
 func AppendSigner(signer []byte, certificate []byte, previousSign []byte) (
-	sign []byte, error Error) {
+		sign []byte, error Error) {
 	cSigner, cSignerLength := cbuf(signer)
 	cCertificate, cCertificateLength := cbuf(certificate)
 	cPreviousSign, cPreviousSignLength := cbuf(previousSign)
@@ -1224,12 +1224,12 @@ func AppendSigner(signer []byte, certificate []byte, previousSign []byte) (
 	return sign, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // IsDataInSignedDataAvailable gets information about
 // the presence of data in signed data
 func IsDataInSignedDataAvailable(signedData []byte) (
-	isAvaliable bool, error Error) {
+		isAvaliable bool, error Error) {
 	cSignedData, cSignedDataLength := cbuf(signedData)
 	var cIsAvaliable C.int
 
@@ -1239,17 +1239,17 @@ func IsDataInSignedDataAvailable(signedData []byte) (
 	return (cIsAvaliable != 0), makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetDataFromSignedData gets the data contained in signed data
 func GetDataFromSignedData(signedData []byte) (
-	data []byte, error Error) {
+		data []byte, error Error) {
 	cSignedData, cSignedDataLength := cbuf(signedData)
 	var cData *C.uchar
 	var cDataLength C.ulong
 
 	cError := C.GetDataFromSignedData(
-		cSignedData, cSignedDataLength,
+		cSignedData, cSignedDataLength, 
 		&cData, &cDataLength)
 	if cError != ErrorNone {
 		return nil, makeError(cError, lang)
@@ -1261,12 +1261,12 @@ func GetDataFromSignedData(signedData []byte) (
 	return data, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
-// GetCertificateFromSignedData gets certificate from signedData or
+// GetCertificateFromSignedData gets certificate from signedData or 
 // p7b archive by index
 func GetCertificateFromSignedData(index int, signedData []byte) (
-	certInfoEx *CertInfoEx, cert []byte, error Error) {
+		certInfoEx *CertInfoEx, cert []byte, error Error) {
 	cIndex := C.ulong(index)
 	cSignedData, cSignedDataSize := cbuf(signedData)
 	var cCertInfoEx **C.char
@@ -1290,11 +1290,11 @@ func GetCertificateFromSignedData(index int, signedData []byte) (
 	return certInfoEx, cert, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // GetSignTimeInfo gets sign information from sign for signIndex
 func GetSignTimeInfo(signIndex int, sign []byte) (
-	timeInfo *TimeInfo, error Error) {
+		timeInfo *TimeInfo, error Error) {
 	cSignIndex := C.ulong(signIndex)
 	cSign, cSignSize := cbuf(sign)
 	var cTimeInfo **C.char
@@ -1313,12 +1313,12 @@ func GetSignTimeInfo(signIndex int, sign []byte) (
 	return timeInfo, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // CtxSignHashValue signs hash value
 func CtxSignHashValue(pkContext *PrivateKeyContext, signAlgo int,
 	hash []byte, appendCert bool) (
-	sign []byte, error Error) {
+		sign []byte, error Error) {
 	cHash, cHashLength := cbuf(hash)
 	cSignAlgo := C.ulong(signAlgo)
 	cAppendCert := toCBool(appendCert)
@@ -1342,12 +1342,12 @@ func CtxSignHashValue(pkContext *PrivateKeyContext, signAlgo int,
 	return sign, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // CtxSignData signs data
 func CtxSignData(pkContext *PrivateKeyContext, signAlgo int, data []byte,
 	external bool, appendCert bool) (
-	sign []byte, error Error) {
+		sign []byte, error Error) {
 	cData, cDataLength := cbuf(data)
 	cSignAlgo := C.ulong(signAlgo)
 	cAppendCert := toCBool(appendCert)
@@ -1372,13 +1372,13 @@ func CtxSignData(pkContext *PrivateKeyContext, signAlgo int, data []byte,
 	return sign, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // CtxCreateSignerEx Creates information about the signer with
 // additional verification information
 func CtxCreateSignerEx(pkContext *PrivateKeyContext,
 	signAlgo int, hash []byte, noContentTimeStamp bool, signType int) (
-	signerInfo []byte, error Error) {
+		signerInfo []byte, error Error) {
 	cSignAlgo := C.ulong(signAlgo)
 	cSignType := C.ulong(signType)
 	cNoContentTimeStamp := toCBool(noContentTimeStamp)
@@ -1400,11 +1400,11 @@ func CtxCreateSignerEx(pkContext *PrivateKeyContext,
 	return signerInfo, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // RawEnvelopData envelop data with raw algorithm
 func RawEnvelopData(recipientCert []byte, data []byte) (
-	envelopedData []byte, error Error) {
+		envelopedData []byte, error Error) {
 	cRecipientCert, cRecipientCertSize := cbuf(recipientCert)
 	cData, cDataSize := cbuf(data)
 	var cEnvelopedData *C.uchar
@@ -1423,11 +1423,11 @@ func RawEnvelopData(recipientCert []byte, data []byte) (
 	return envelopedData, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // RawDevelopData develop data with raw algorithm
 func RawDevelopData(envelopedData []byte) (
-	data []byte, senderInfo *SenderInfo, error Error) {
+		data []byte, senderInfo *SenderInfo, error Error) {
 	cEnvelopedData, cEnvelopedDataSize := cbuf(envelopedData)
 	var cData *C.uchar
 	var cDataSize C.ulong
@@ -1449,13 +1449,13 @@ func RawDevelopData(envelopedData []byte) (
 	return data, senderInfo, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // CtxEnvelopData envelopes data
 func CtxEnvelopData(pkContext *PrivateKeyContext,
 	clientsCerts [][]byte, clientAppendType int, signData bool,
 	appendCert bool, data []byte) (
-	envelopedData []byte, error Error) {
+		envelopedData []byte, error Error) {
 	cClientsData, cClientsDataSize := cbuf(data)
 	cClientCertsCount, cClientCerts, cClientsCertsSizes := cbufs(clientsCerts)
 	defer cbufsFree(cClientCertsCount, cClientCerts, cClientsCertsSizes)
@@ -1486,12 +1486,12 @@ func CtxEnvelopData(pkContext *PrivateKeyContext,
 	return envelopedData, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // CtxDevelopData developes data
 func CtxDevelopData(pkContext *PrivateKeyContext,
 	envelopedData []byte, senderCert []byte) (
-	data []byte, senderInfo *SenderInfo, error Error) {
+		data []byte, senderInfo *SenderInfo, error Error) {
 	cEnvelopedData, cEnvelopedDataSize := cbuf(envelopedData)
 	cSenderCert, cSenderCertSize := cbuf(senderCert)
 	var cData *C.uchar
@@ -1520,11 +1520,11 @@ func CtxDevelopData(pkContext *PrivateKeyContext,
 	return data, senderInfo, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SessionDestroy frees session context
 func SessionDestroy(session *Session) (
-	error Error) {
+		error Error) {
 	if session == nil {
 		return makeError(ErrorBadParameter, lang)
 	}
@@ -1534,11 +1534,11 @@ func SessionDestroy(session *Session) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SessionGetPeerCertificateInfo get peer certificate for session
 func SessionGetPeerCertificateInfo(session *Session) (
-	info *CertInfo, error Error) {
+		info *CertInfo, error Error) {
 	var cInfo **C.char
 	var cInfoSize C.ulong
 
@@ -1558,11 +1558,11 @@ func SessionGetPeerCertificateInfo(session *Session) (
 	return info, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // ClientRawMultiSessionCreate creates raw multi user session by client
 func ClientRawMultiSessionCreate(expireTime int, serverData []byte) (
-	session *Session, error Error) {
+		session *Session, error Error) {
 	cExpireTime := C.ulong(expireTime)
 	cServerData, cServerDataSize := cbuf(serverData)
 
@@ -1577,11 +1577,11 @@ func ClientRawMultiSessionCreate(expireTime int, serverData []byte) (
 	return session, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // ServerRawMultiSessionCreate creates raw multi user session by server
 func ServerRawMultiSessionCreate(expireTime int, clientsCerts [][]byte) (
-	session *Session, clientsData []byte, error Error) {
+		session *Session, clientsData []byte, error Error) {
 	cExpireTime := C.ulong(expireTime)
 	cClientCertsCount, cClientCerts, cClientsCertsSizes := cbufs(clientsCerts)
 	defer cbufsFree(cClientCertsCount, cClientCerts, cClientsCertsSizes)
@@ -1604,11 +1604,11 @@ func ServerRawMultiSessionCreate(expireTime int, clientsCerts [][]byte) (
 	return session, clientsData, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // RawMultiSessionAddClients creates new clients data for raw multi user session
 func RawMultiSessionAddClients(session *Session, clientsCerts [][]byte) (
-	clientsData []byte, error Error) {
+		clientsData []byte, error Error) {
 	cClientCertsCount, cClientCerts, cClientsCertsSizes := cbufs(clientsCerts)
 	defer cbufsFree(cClientCertsCount, cClientCerts, cClientsCertsSizes)
 	var cClientsData *C.uchar
@@ -1632,11 +1632,11 @@ func RawMultiSessionAddClients(session *Session, clientsCerts [][]byte) (
 	return clientsData, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SessionEncrypt encrypts data with session
 func SessionEncrypt(session *Session, data []byte) (
-	encryptedData []byte, error Error) {
+		encryptedData []byte, error Error) {
 	cData, cDataSize := cbuf(data)
 	var cEncryptedData *C.uchar
 	var cEncryptedDataSize C.ulong
@@ -1658,11 +1658,11 @@ func SessionEncrypt(session *Session, data []byte) (
 	return encryptedData, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // SessionDecrypt decrypts data with session
 func SessionDecrypt(session *Session, encryptedData []byte) (
-	data []byte, error Error) {
+		data []byte, error Error) {
 	cEncryptedData, cEncryptedDataSize := cbuf(encryptedData)
 	var cData *C.uchar
 	var cDataSize C.ulong
@@ -1683,11 +1683,11 @@ func SessionDecrypt(session *Session, encryptedData []byte) (
 	return data, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // CtxCreate creates context
 func CtxCreate() (
-	context *Context, error Error) {
+		context *Context, error Error) {
 	context = new(Context)
 
 	cError := C.CtxCreate(&context.Handle)
@@ -1698,11 +1698,11 @@ func CtxCreate() (
 	return context, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // CtxFree frees context
 func CtxFree(context *Context) (
-	error Error) {
+		error Error) {
 	if context == nil {
 		return makeError(ErrorBadParameter, lang)
 	}
@@ -1712,11 +1712,11 @@ func CtxFree(context *Context) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // AlgoCtxCreate creates algorithm context
 func AlgoCtxCreate(algo int) (
-	algoContext *AlgoContext, error Error) {
+		algoContext *AlgoContext, error Error) {
 	cAlgo := C.ulong(algo)
 	algoContext = new(AlgoContext)
 
@@ -1728,11 +1728,11 @@ func AlgoCtxCreate(algo int) (
 	return algoContext, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // AlgoCtxGenerateKey generates algorithm key
 func AlgoCtxGenerateKey(algoContext *AlgoContext) (
-	error Error) {
+		error Error) {
 	if algoContext == nil {
 		return makeError(ErrorBadParameter, lang)
 	}
@@ -1745,11 +1745,11 @@ func AlgoCtxGenerateKey(algoContext *AlgoContext) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // AlgoCtxSetKey sets algorithm key
 func AlgoCtxSetKey(algoContext *AlgoContext, key []byte, iv []byte) (
-	error Error) {
+		error Error) {
 	cKey, cKeySize := cbuf(key)
 	cIV, cIVSize := cbuf(iv)
 
@@ -1766,11 +1766,11 @@ func AlgoCtxSetKey(algoContext *AlgoContext, key []byte, iv []byte) (
 	return makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // AlgoCtxGetKey gets algorithm key
 func AlgoCtxGetKey(algoContext *AlgoContext) (
-	key []byte, iv []byte, error Error) {
+		key []byte, iv []byte, error Error) {
 	var cKeySize C.ulong
 	var cIVSize C.ulong
 
@@ -1801,11 +1801,11 @@ func AlgoCtxGetKey(algoContext *AlgoContext) (
 	return key, iv, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // AlgoCtxEncrypt encrypts data
 func AlgoCtxEncrypt(algoContext *AlgoContext, data []byte) (
-	encryptedData []byte, error Error) {
+		encryptedData []byte, error Error) {
 	cData, cDataSize := cbuf(data)
 
 	if algoContext == nil {
@@ -1823,11 +1823,11 @@ func AlgoCtxEncrypt(algoContext *AlgoContext, data []byte) (
 	return encryptedData, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // AlgoCtxEncrypt decrypts data
 func AlgoCtxDecrypt(algoContext *AlgoContext, encryptedData []byte) (
-	data []byte, error Error) {
+		data []byte, error Error) {
 	cEncryptedData, cEncryptedDataSize := cbuf(encryptedData)
 
 	if algoContext == nil {
@@ -1846,11 +1846,11 @@ func AlgoCtxDecrypt(algoContext *AlgoContext, encryptedData []byte) (
 	return data, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // AlgoCtxGetDataMAC gets data MAC
 func AlgoCtxGetDataMAC(algoContext *AlgoContext, data []byte, macSize int) (
-	mac []byte, error Error) {
+		mac []byte, error Error) {
 	cData, cDataSize := cbuf(data)
 	cMacSize := C.ulong(macSize)
 
@@ -1872,11 +1872,11 @@ func AlgoCtxGetDataMAC(algoContext *AlgoContext, data []byte, macSize int) (
 	return mac, makeError(cError, lang)
 }
 
-// -----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 
 // AlgoCtxFree frees algorithm context
 func AlgoCtxFree(algoContext *AlgoContext) (
-	error Error) {
+		error Error) {
 	if algoContext == nil {
 		return makeError(ErrorBadParameter, lang)
 	}
@@ -1886,4 +1886,4 @@ func AlgoCtxFree(algoContext *AlgoContext) (
 	return makeError(cError, lang)
 }
 
-// =============================================================================
+//=============================================================================

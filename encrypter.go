@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/dmytro-vovk/go-eusign/internal/src"
+	src "github.com/dmytro-vovk/go-eusign/src"
 )
 
 type Encrypter struct {

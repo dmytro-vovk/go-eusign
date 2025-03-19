@@ -1,7 +1,7 @@
 package eusign
 
 import (
-	"github.com/dmytro-vovk/go-eusign/internal/src"
+	src "github.com/dmytro-vovk/go-eusign/src"
 )
 
 type Option func()

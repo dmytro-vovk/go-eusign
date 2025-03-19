@@ -16,7 +16,7 @@ func TestNew(t *testing.T) {
 		require.NoError(t, signer.Finalize())
 	})
 
-	pk, info, err := signer.LoadPrivateKey("data/Key-6.dat", "12345")
+	pk, info, err := signer.LoadPrivateKey("data/Key-6.dat", "12345", "")
 	require.NoError(t, err)
 	require.NotNil(t, pk)
 
