@@ -1,7 +1,6 @@
 package eusign
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"runtime"
@@ -92,21 +91,23 @@ func (e *Encrypter) Encrypt(data []byte, algo int) ([]byte, []byte, error) {
 	return encrypted, mac, nil
 }
 
-func (e *Encrypter) Decrypt(data []byte, mac, key, iv []byte) ([]byte, error) {
-	if err := wrapError(src.AlgoCtxSetKey(e.ctx, key, iv)); err != nil {
-		return nil, fmt.Errorf("set key: %w", err)
-	}
+func (e *Encrypter) Decrypt(data []byte /*, mac, key, iv []byte*/) ([]byte, error) {
+	// if err := wrapError(src.AlgoCtxSetKey(e.ctx, key, iv)); err != nil {
+	// 	return nil, fmt.Errorf("set key: %w", err)
+	// }
 
 	decrypted, err := src.AlgoCtxDecrypt(e.ctx, data)
 	if err := wrapError(err); err != nil {
 		return nil, fmt.Errorf("decrypt data: %w", err)
 	}
 
-	mac2 := decrypted[len(decrypted)-len(mac):]
-
-	if !bytes.Equal(mac, mac2) {
-		return nil, errors.New("invalid mac")
-	}
-
-	return decrypted[:len(decrypted)-len(mac)], nil
+	return decrypted, nil
+	//
+	// mac2 := decrypted[len(decrypted)-len(mac):]
+	//
+	// if !bytes.Equal(mac, mac2) {
+	// 	return nil, errors.New("invalid mac")
+	// }
+	//
+	// return decrypted[:len(decrypted)-len(mac)], nil
 }

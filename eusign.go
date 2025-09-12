@@ -242,7 +242,7 @@ func (s *Signer) LoadPrivateKey(fileName, password, cn string) ([]byte, *src.Cer
 
 	for i := 0; ; i++ {
 		infoEx, cert, err := src.GetCertificateFromSignedData(i, pkCertsCMP)
-		if err.Code == src.WarningEndOfEnum {
+		if err.(src.Error).Code == src.WarningEndOfEnum {
 			break
 		}
 

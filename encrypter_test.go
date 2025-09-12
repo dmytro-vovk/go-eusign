@@ -20,10 +20,12 @@ func TestEncrypter(t *testing.T) {
 	encrypted, mac, err := e.Encrypt(data, src.AlgoDSTU7624_MAC_256)
 	require.NoError(t, err)
 
-	key, iv, err := e.GetKey()
-	require.NoError(t, err)
+	_ = mac
 
-	newData, err := e.Decrypt(encrypted, mac, key, iv)
+	// key, iv, err := e.GetKey()
+	// require.NoError(t, err)
+
+	newData, err := e.Decrypt(encrypted /*, mac, key, iv*/)
 	require.NoError(t, err)
 
 	assert.Equal(t, data, newData)

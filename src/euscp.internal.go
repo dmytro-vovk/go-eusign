@@ -1,6 +1,3 @@
-//=============================================================================
-
-// Package euscp with internal module functions
 package euscp
 
 // #include <stdlib.h>
@@ -15,8 +12,6 @@ import (
 	"time"
 	"unsafe"
 )
-
-//=============================================================================
 
 const (
 	FileStoreSettingsFieldsCount          = 8
@@ -41,8 +36,6 @@ const ErrorMessageMaxLength = 1025
 
 const UserInfoVersion = 3
 
-//=============================================================================
-
 func cbuf(buf []byte) (
 	ptr *C.uchar, size C.ulong) {
 	if buf == nil {
@@ -55,8 +48,6 @@ func cbuf(buf []byte) (
 	}
 	return (*C.uchar)(bufptr), C.ulong(len(buf))
 }
-
-//-----------------------------------------------------------------------------
 
 func cbufs(bufs [][]byte) (
 	cSize C.ulong, cBytesArrays **C.uchar, cBytesArraysSizes *C.ulong) {
@@ -79,17 +70,15 @@ func cbufs(bufs [][]byte) (
 	return cSize, cBytesArrays, cBytesArraysSizes
 }
 
-//-----------------------------------------------------------------------------
-
-func gobufs(cSize C.ulong, 
+func gobufs(cSize C.ulong,
 	cBytesArrays **C.uchar, cBytesArraysSizes *C.ulong) (
-		bufs [][]byte) {
+	bufs [][]byte) {
 	if cBytesArrays != nil && cBytesArraysSizes != nil {
 		arrays := (*[1 << 28]*C.uchar)(unsafe.Pointer(
 			cBytesArrays))[:cSize:cSize]
 		sizes := (*[1 << 28]C.ulong)(unsafe.Pointer(
 			cBytesArraysSizes))[:cSize:cSize]
-		for i:=0; i < len(arrays); i++ {
+		for i := 0; i < len(arrays); i++ {
 			buf := C.GoBytes(
 				unsafe.Pointer(arrays[i]), C.int(sizes[i]))
 			bufs = append(bufs, buf)
@@ -98,8 +87,6 @@ func gobufs(cSize C.ulong,
 
 	return bufs
 }
-
-//-----------------------------------------------------------------------------
 
 func cbufsFree(cSize C.ulong,
 	cBytesArrays **C.uchar, cBytesArraysSizes *C.ulong) {
@@ -116,8 +103,6 @@ func cbufsFree(cSize C.ulong,
 		C.free(unsafe.Pointer(cBytesArraysSizes))
 	}
 }
-
-//-----------------------------------------------------------------------------
 
 func cStrings(strings []string) (
 	cStrings **C.char, cSize C.ulong) {
@@ -137,8 +122,6 @@ func cStrings(strings []string) (
 	return cStrings, C.ulong(length)
 }
 
-//-----------------------------------------------------------------------------
-
 func toCBool(val bool) (
 	cVal C.int) {
 	cVal = C.int(0)
@@ -148,17 +131,13 @@ func toCBool(val bool) (
 	return cVal
 }
 
-//=============================================================================
-
 func getFieldString(cFields []*C.char, index *int) (
-		str string) {
+	str string) {
 	str = C.GoString(cFields[*index])
 	*index = *index + 1
 
 	return str
 }
-
-//-----------------------------------------------------------------------------
 
 func setFieldString(val string, cFields []*C.char, index *int) {
 	cStr := C.CString(val)
@@ -166,10 +145,8 @@ func setFieldString(val string, cFields []*C.char, index *int) {
 	*index = *index + 1
 }
 
-//-----------------------------------------------------------------------------
-
 func getFieldBytes(cFields []*C.char, index *int) (
-		bytes []byte) {
+	bytes []byte) {
 	str := getFieldString(cFields, index)
 	bytes, err := base64.StdEncoding.DecodeString(str)
 	if err != nil {
@@ -178,10 +155,8 @@ func getFieldBytes(cFields []*C.char, index *int) (
 	return bytes
 }
 
-//-----------------------------------------------------------------------------
-
 func getFieldInt(cFields []*C.char, index *int) (
-		val int) {
+	val int) {
 	str := getFieldString(cFields, index)
 	val, err := strconv.Atoi(str)
 	if err != nil {
@@ -190,20 +165,14 @@ func getFieldInt(cFields []*C.char, index *int) (
 	return val
 }
 
-//-----------------------------------------------------------------------------
-
 func setFieldInt(val int, cFields []*C.char, index *int) {
 	setFieldString(strconv.Itoa(val), cFields, index)
 }
 
-//-----------------------------------------------------------------------------
-
 func getFieldBool(cFields []*C.char, index *int) (
-		val bool) {
+	val bool) {
 	return getFieldInt(cFields, index) != 0
 }
-
-//-----------------------------------------------------------------------------
 
 func setFieldBool(val bool, cFields []*C.char, index *int) {
 	intVal := 0
@@ -214,10 +183,8 @@ func setFieldBool(val bool, cFields []*C.char, index *int) {
 	setFieldInt(intVal, cFields, index)
 }
 
-//-----------------------------------------------------------------------------
-
 func getFieldTime(cFields []*C.char, index *int) (
-		date time.Time) {
+	date time.Time) {
 	str := getFieldString(cFields, index)
 	date, error := time.Parse(TimeFormat, str)
 	if error != nil {
@@ -226,16 +193,12 @@ func getFieldTime(cFields []*C.char, index *int) (
 	return date
 }
 
-//-----------------------------------------------------------------------------
-
 func setFieldTime(val time.Time, cFields []*C.char, index *int) {
 	setFieldString(val.Format(TimeFormat), cFields, index)
 }
 
-//-----------------------------------------------------------------------------
-
 func encodeFileStoreSettings(settings *FileStoreSettings) (
-		cFields **C.char, cLength C.ulong) {
+	cFields **C.char, cLength C.ulong) {
 	length := FileStoreSettingsFieldsCount
 	index := 0
 
@@ -257,10 +220,8 @@ func encodeFileStoreSettings(settings *FileStoreSettings) (
 	return cFields, C.ulong(length)
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeFileStoreSettings(cFields **C.char, cLength C.ulong) (
-		settings *FileStoreSettings) {
+	settings *FileStoreSettings) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -278,10 +239,8 @@ func decodeFileStoreSettings(cFields **C.char, cLength C.ulong) (
 	return settings
 }
 
-//-----------------------------------------------------------------------------
-
 func encodeProxySettings(settings *ProxySettings) (
-		cFields **C.char, cLength C.ulong) {
+	cFields **C.char, cLength C.ulong) {
 	length := ProxySettingsFieldsCount
 	index := 0
 
@@ -302,10 +261,8 @@ func encodeProxySettings(settings *ProxySettings) (
 	return cFields, C.ulong(length)
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeProxySettings(cFields **C.char, cLength C.ulong) (
-		settings *ProxySettings) {
+	settings *ProxySettings) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -322,10 +279,8 @@ func decodeProxySettings(cFields **C.char, cLength C.ulong) (
 	return settings
 }
 
-//-----------------------------------------------------------------------------
-
 func encodeOCSPSettings(settings *OCSPSettings) (
-		cFields **C.char, cLength C.ulong) {
+	cFields **C.char, cLength C.ulong) {
 	length := OCSPSettingsFieldsCount
 	index := 0
 
@@ -343,10 +298,8 @@ func encodeOCSPSettings(settings *OCSPSettings) (
 	return cFields, C.ulong(length)
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeOCSPSettings(cFields **C.char, cLength C.ulong) (
-		settings *OCSPSettings) {
+	settings *OCSPSettings) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -360,10 +313,8 @@ func decodeOCSPSettings(cFields **C.char, cLength C.ulong) (
 	return settings
 }
 
-//-----------------------------------------------------------------------------
-
 func encodeOCSPAccessInfoModeSettings(settings *OCSPAccessInfoModeSettings) (
-		cFields **C.char, cLength C.ulong) {
+	cFields **C.char, cLength C.ulong) {
 	length := OCSPAccessInfoModeSettingsFieldsCount
 	index := 0
 
@@ -378,10 +329,8 @@ func encodeOCSPAccessInfoModeSettings(settings *OCSPAccessInfoModeSettings) (
 	return cFields, C.ulong(length)
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeOCSPAccessInfoModeSettings(cFields **C.char, cLength C.ulong) (
-		settings *OCSPAccessInfoModeSettings) {
+	settings *OCSPAccessInfoModeSettings) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -392,10 +341,8 @@ func decodeOCSPAccessInfoModeSettings(cFields **C.char, cLength C.ulong) (
 	return settings
 }
 
-//-----------------------------------------------------------------------------
-
 func encodeOCSPAccessInfoSettings(settings *OCSPAccessInfoSettings) (
-		cFields **C.char, cLength C.ulong) {
+	cFields **C.char, cLength C.ulong) {
 	length := OCSPAccessInfoSettingsFieldsCount
 	index := 0
 
@@ -412,10 +359,8 @@ func encodeOCSPAccessInfoSettings(settings *OCSPAccessInfoSettings) (
 	return cFields, C.ulong(length)
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeOCSPAccessInfoSettings(cFields **C.char, cLength C.ulong) (
-		settings *OCSPAccessInfoSettings) {
+	settings *OCSPAccessInfoSettings) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -428,10 +373,8 @@ func decodeOCSPAccessInfoSettings(cFields **C.char, cLength C.ulong) (
 	return settings
 }
 
-//-----------------------------------------------------------------------------
-
 func encodeTSPSettings(settings *TSPSettings) (
-		cFields **C.char, cLength C.ulong) {
+	cFields **C.char, cLength C.ulong) {
 	length := TSPSettingsFieldsCount
 	index := 0
 
@@ -448,10 +391,8 @@ func encodeTSPSettings(settings *TSPSettings) (
 	return cFields, C.ulong(length)
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeTSPSettings(cFields **C.char, cLength C.ulong) (
-		settings *TSPSettings) {
+	settings *TSPSettings) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -464,10 +405,10 @@ func decodeTSPSettings(cFields **C.char, cLength C.ulong) (
 	return settings
 }
 
-//-----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 func encodeLDAPSettings(settings *LDAPSettings) (
-		cFields **C.char, cLength C.ulong) {
+	cFields **C.char, cLength C.ulong) {
 	length := LDAPSettingsFieldsCount
 	index := 0
 
@@ -487,10 +428,8 @@ func encodeLDAPSettings(settings *LDAPSettings) (
 	return cFields, C.ulong(length)
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeLDAPSettings(cFields **C.char, cLength C.ulong) (
-		settings *LDAPSettings) {
+	settings *LDAPSettings) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -506,10 +445,8 @@ func decodeLDAPSettings(cFields **C.char, cLength C.ulong) (
 	return settings
 }
 
-//-----------------------------------------------------------------------------
-
 func encodeCMPSettings(settings *CMPSettings) (
-		cFields **C.char, cLength C.ulong) {
+	cFields **C.char, cLength C.ulong) {
 	length := CMPSettingsFieldsCount
 	index := 0
 
@@ -527,10 +464,8 @@ func encodeCMPSettings(settings *CMPSettings) (
 	return cFields, C.ulong(length)
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeCMPSettings(cFields **C.char, cLength C.ulong) (
-		settings *CMPSettings) {
+	settings *CMPSettings) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -544,10 +479,8 @@ func decodeCMPSettings(cFields **C.char, cLength C.ulong) (
 	return settings
 }
 
-//-----------------------------------------------------------------------------
-
 func encodeLogSettings(settings *LogSettings) (
-		cFields **C.char, cLength C.ulong) {
+	cFields **C.char, cLength C.ulong) {
 	length := LogSettingsFieldsCount
 	index := 0
 
@@ -566,10 +499,8 @@ func encodeLogSettings(settings *LogSettings) (
 	return cFields, C.ulong(length)
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeLogSettings(cFields **C.char, cLength C.ulong) (
-		settings *LogSettings) {
+	settings *LogSettings) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -583,8 +514,6 @@ func decodeLogSettings(cFields **C.char, cLength C.ulong) (
 
 	return settings
 }
-
-//-----------------------------------------------------------------------------
 
 func encodeModeSettings(settings *ModeSettings) (
 	cFields **C.char, cLength C.ulong) {
@@ -602,8 +531,6 @@ func encodeModeSettings(settings *ModeSettings) (
 	return cFields, C.ulong(length)
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeModeSettings(cFields **C.char, cLength C.ulong) (
 	settings *ModeSettings) {
 	length := int(cLength)
@@ -616,10 +543,8 @@ func decodeModeSettings(cFields **C.char, cLength C.ulong) (
 	return settings
 }
 
-//-----------------------------------------------------------------------------
-
 func encodeKeyMedia(keyMedia *KeyMedia) (
-		cFields **C.char, cLength C.ulong) {
+	cFields **C.char, cLength C.ulong) {
 	length := KeyMediaFieldsCount
 	index := 0
 
@@ -636,10 +561,8 @@ func encodeKeyMedia(keyMedia *KeyMedia) (
 	return cFields, C.ulong(length)
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeCertOwnerInfo(cFields **C.char, cLength C.ulong) (
-		info *CertOwnerInfo) {
+	info *CertOwnerInfo) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -667,10 +590,8 @@ func decodeCertOwnerInfo(cFields **C.char, cLength C.ulong) (
 	return info
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeSignerInfo(cFields **C.char, cLength C.ulong) (
-		info *SignerInfo) {
+	info *SignerInfo) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -701,10 +622,8 @@ func decodeSignerInfo(cFields **C.char, cLength C.ulong) (
 	return info
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeSenderInfo(cFields **C.char, cLength C.ulong) (
-		info *SenderInfo) {
+	info *SenderInfo) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -735,10 +654,8 @@ func decodeSenderInfo(cFields **C.char, cLength C.ulong) (
 	return info
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeTimeInfo(cFields **C.char, cLength C.ulong) (
-		info *TimeInfo) {
+	info *TimeInfo) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -754,10 +671,8 @@ func decodeTimeInfo(cFields **C.char, cLength C.ulong) (
 	return info
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeCertInfo(cFields **C.char, cLength C.ulong) (
-		info *CertInfo) {
+	info *CertInfo) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -812,10 +727,8 @@ func decodeCertInfo(cFields **C.char, cLength C.ulong) (
 	return info
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeCertInfoEx(cFields **C.char, cLength C.ulong) (
-		info *CertInfoEx) {
+	info *CertInfoEx) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -886,10 +799,8 @@ func decodeCertInfoEx(cFields **C.char, cLength C.ulong) (
 	return info
 }
 
-//-----------------------------------------------------------------------------
-
 func encodeUserInfo(userInfo *UserInfo) (
-		cFields **C.char, cLength C.ulong) {
+	cFields **C.char, cLength C.ulong) {
 	length := UserInfoFieldsCount
 	index := 0
 
@@ -930,10 +841,8 @@ func encodeUserInfo(userInfo *UserInfo) (
 	return cFields, C.ulong(length)
 }
 
-//-----------------------------------------------------------------------------
-
 func decodeRequestInfo(cFields **C.char, cLength C.ulong) (
-		request *RequestInfo) {
+	request *RequestInfo) {
 	length := int(cLength)
 	fields := (*[1 << 28]*C.char)(unsafe.Pointer(cFields))[:length:length]
 	index := 0
@@ -992,10 +901,7 @@ func decodeRequestInfo(cFields **C.char, cLength C.ulong) (
 	return request
 }
 
-//=============================================================================
-
-func makeError(code C.ulong, lang int) (
-		err Error) {
+func makeError(code C.ulong, lang int) error {
 	szMessage := C.malloc(C.sizeof_char * ErrorMessageMaxLength)
 	defer C.free(unsafe.Pointer(szMessage))
 
@@ -1010,16 +916,10 @@ func makeError(code C.ulong, lang int) (
 	}
 }
 
-//-----------------------------------------------------------------------------
-
 func freeMemory(cPtr *C.uchar) {
 	C.FreeMemory(cPtr)
 }
 
-//-----------------------------------------------------------------------------
-
 func freeStructFields(cPtr **C.char, cLength C.ulong) {
 	C.FreeStructFields(cPtr, cLength)
 }
-
-//=============================================================================

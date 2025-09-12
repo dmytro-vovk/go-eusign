@@ -1,15 +1,13 @@
-//=============================================================================
-
-// Package euscp implements
 package euscp
 
 // #cgo CFLAGS:
-// #cgo CXXFLAGS: -g -Wall 
+// #cgo CXXFLAGS: -g -Wall
 // #cgo linux CXXFLAGS: -DOS_NIX
 // #cgo darwin CXXFLAGS: -DOS_NIX
-// #cgo LDFLAGS: -ldl -L${SRCDIR}/lib 
+// #cgo linux LDFLAGS: -ldl -L${SRCDIR}/lib/linux
+// #cgo darwin LDFLAGS: -ldl -L${SRCDIR}/lib/darwin
 // #cgo linux LDFLAGS: -losi
-// #cgo darwin LDFLAGS: -Wl,-rpath,${SRCDIR}/lib -losi
+// #cgo darwin LDFLAGS: -Wl,-rpath,${SRCDIR}/lib/darwin -losi
 // #include <stdlib.h>
 // #include "Module.h"
 import (
@@ -19,45 +17,31 @@ import (
 	"unsafe"
 )
 
-//=============================================================================
-
 var lang = LangDefault
 
-//=============================================================================
-
 // Initialize using library
-func Initialize() (
-		error Error) {
+func Initialize() error {
 	cError := C.Initialize()
 
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // Finalize using library
-func Finalize() (
-		error Error) {
+func Finalize() error {
 	cError := C.Finalize()
 
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // IsInitialized check the status of the library
-func IsInitialized() (
-		isInitialized bool) {
+func IsInitialized() bool {
 	cIsInitialized := C.IsInitialized()
 
-	return (cIsInitialized != 0)
+	return cIsInitialized != 0
 }
 
-//-----------------------------------------------------------------------------
-
 // DoesNeedSetSettings gets signs of the need to set parameters
-func DoesNeedSetSettings() (
-		doesNeedSetSettings bool, error Error) {
+func DoesNeedSetSettings() (bool, error) {
 	var cDoesNeedSetSettings C.int
 
 	cError := C.DoesNeedSetSettings(&cDoesNeedSetSettings)
@@ -65,14 +49,11 @@ func DoesNeedSetSettings() (
 		return false, makeError(cError, lang)
 	}
 
-	return (cDoesNeedSetSettings != 0), makeError(cError, lang)
+	return cDoesNeedSetSettings != 0, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetFileStoreSettings gets file store settings
-func GetFileStoreSettings() (
-		settings *FileStoreSettings, error Error) {
+func GetFileStoreSettings() (*FileStoreSettings, error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -81,17 +62,14 @@ func GetFileStoreSettings() (
 		return nil, makeError(cError, lang)
 	}
 
-	settings = decodeFileStoreSettings(cSettings, cSettingsSize)
+	settings := decodeFileStoreSettings(cSettings, cSettingsSize)
 	C.FreeStructFields(cSettings, cSettingsSize)
 
 	return settings, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SetFileStoreSettings sets file store settings
-func SetFileStoreSettings(settings *FileStoreSettings) (
-		error Error) {
+func SetFileStoreSettings(settings *FileStoreSettings) error {
 	cSettings, cSettingsSize := encodeFileStoreSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -103,11 +81,8 @@ func SetFileStoreSettings(settings *FileStoreSettings) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetProxySettings gets proxy settings
-func GetProxySettings() (
-		settings *ProxySettings, error Error) {
+func GetProxySettings() (*ProxySettings, error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -116,17 +91,14 @@ func GetProxySettings() (
 		return nil, makeError(cError, lang)
 	}
 
-	settings = decodeProxySettings(cSettings, cSettingsSize)
+	settings := decodeProxySettings(cSettings, cSettingsSize)
 	C.FreeStructFields(cSettings, cSettingsSize)
 
 	return settings, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SetProxySettings sets proxy settings
-func SetProxySettings(settings *ProxySettings) (
-		error Error) {
+func SetProxySettings(settings *ProxySettings) error {
 	cSettings, cSettingsSize := encodeProxySettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -138,11 +110,8 @@ func SetProxySettings(settings *ProxySettings) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetOCSPSettings gets OCSP settings
-func GetOCSPSettings() (
-		settings *OCSPSettings, error Error) {
+func GetOCSPSettings() (*OCSPSettings, error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -151,17 +120,14 @@ func GetOCSPSettings() (
 		return nil, makeError(cError, lang)
 	}
 
-	settings = decodeOCSPSettings(cSettings, cSettingsSize)
+	settings := decodeOCSPSettings(cSettings, cSettingsSize)
 	C.FreeStructFields(cSettings, cSettingsSize)
 
 	return settings, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SetOCSPSettings sets OCSP settings
-func SetOCSPSettings(settings *OCSPSettings) (
-		error Error) {
+func SetOCSPSettings(settings *OCSPSettings) error {
 	cSettings, cSettingsSize := encodeOCSPSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -173,11 +139,8 @@ func SetOCSPSettings(settings *OCSPSettings) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetOCSPAccessInfoModeSettings gets OCSP access info mode settings
-func GetOCSPAccessInfoModeSettings() (
-		settings *OCSPAccessInfoModeSettings, error Error) {
+func GetOCSPAccessInfoModeSettings() (*OCSPAccessInfoModeSettings, error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -186,17 +149,14 @@ func GetOCSPAccessInfoModeSettings() (
 		return nil, makeError(cError, lang)
 	}
 
-	settings = decodeOCSPAccessInfoModeSettings(cSettings, cSettingsSize)
+	settings := decodeOCSPAccessInfoModeSettings(cSettings, cSettingsSize)
 	C.FreeStructFields(cSettings, cSettingsSize)
 
 	return settings, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SetOCSPAccessInfoModeSettings sets OCSP access info mode settings
-func SetOCSPAccessInfoModeSettings(settings *OCSPAccessInfoModeSettings) (
-		error Error) {
+func SetOCSPAccessInfoModeSettings(settings *OCSPAccessInfoModeSettings) error {
 	cSettings, cSettingsSize := encodeOCSPAccessInfoModeSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -208,11 +168,8 @@ func SetOCSPAccessInfoModeSettings(settings *OCSPAccessInfoModeSettings) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // EnumOCSPAccessInfoSettings enums OCSP access info settings
-func EnumOCSPAccessInfoSettings(index int) (
-		settings *OCSPAccessInfoSettings, error Error) {
+func EnumOCSPAccessInfoSettings(index int) (*OCSPAccessInfoSettings, error) {
 	cIndex := C.ulong(index)
 	var cSettings **C.char
 	var cSettingsSize C.ulong
@@ -223,17 +180,14 @@ func EnumOCSPAccessInfoSettings(index int) (
 		return nil, makeError(cError, lang)
 	}
 
-	settings = decodeOCSPAccessInfoSettings(cSettings, cSettingsSize)
+	settings := decodeOCSPAccessInfoSettings(cSettings, cSettingsSize)
 	C.FreeStructFields(cSettings, cSettingsSize)
 
 	return settings, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetOCSPAccessInfoSettings gets ocsp access info settings
-func GetOCSPAccessInfoSettings(issuerCN string) (
-		settings *OCSPAccessInfoSettings, error Error) {
+func GetOCSPAccessInfoSettings(issuerCN string) (*OCSPAccessInfoSettings, error) {
 	cIssuerCN := C.CString(issuerCN)
 	defer C.free(unsafe.Pointer(cIssuerCN))
 	var cSettings **C.char
@@ -245,17 +199,14 @@ func GetOCSPAccessInfoSettings(issuerCN string) (
 		return nil, makeError(cError, lang)
 	}
 
-	settings = decodeOCSPAccessInfoSettings(cSettings, cSettingsSize)
+	settings := decodeOCSPAccessInfoSettings(cSettings, cSettingsSize)
 	C.FreeStructFields(cSettings, cSettingsSize)
 
 	return settings, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SetOCSPAccessInfoSettings sets ocsp access info settings
-func SetOCSPAccessInfoSettings(settings *OCSPAccessInfoSettings) (
-		error Error) {
+func SetOCSPAccessInfoSettings(settings *OCSPAccessInfoSettings) error {
 	cSettings, cSettingsSize := encodeOCSPAccessInfoSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -267,11 +218,8 @@ func SetOCSPAccessInfoSettings(settings *OCSPAccessInfoSettings) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // DeleteOCSPAccessInfoSettings delete ocsp access info settings
-func DeleteOCSPAccessInfoSettings(issuerCN string) (
-		error Error) {
+func DeleteOCSPAccessInfoSettings(issuerCN string) error {
 	cIssuerCN := C.CString(issuerCN)
 	defer C.free(unsafe.Pointer(cIssuerCN))
 
@@ -283,11 +231,8 @@ func DeleteOCSPAccessInfoSettings(issuerCN string) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetTSPSettings gets TSP settings
-func GetTSPSettings() (
-		settings *TSPSettings, error Error) {
+func GetTSPSettings() (*TSPSettings, error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -296,17 +241,14 @@ func GetTSPSettings() (
 		return nil, makeError(cError, lang)
 	}
 
-	settings = decodeTSPSettings(cSettings, cSettingsSize)
+	settings := decodeTSPSettings(cSettings, cSettingsSize)
 	C.FreeStructFields(cSettings, cSettingsSize)
 
 	return settings, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SetTSPSettings sets TSP settings
-func SetTSPSettings(settings *TSPSettings) (
-		error Error) {
+func SetTSPSettings(settings *TSPSettings) error {
 	cSettings, cSettingsSize := encodeTSPSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -318,11 +260,8 @@ func SetTSPSettings(settings *TSPSettings) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetLDAPSettings gets LDAP settings
-func GetLDAPSettings() (
-		settings *LDAPSettings, error Error) {
+func GetLDAPSettings() (*LDAPSettings, error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -331,17 +270,14 @@ func GetLDAPSettings() (
 		return nil, makeError(cError, lang)
 	}
 
-	settings = decodeLDAPSettings(cSettings, cSettingsSize)
+	settings := decodeLDAPSettings(cSettings, cSettingsSize)
 	C.FreeStructFields(cSettings, cSettingsSize)
 
 	return settings, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SetLDAPSettings sets LDAP settings
-func SetLDAPSettings(settings *LDAPSettings) (
-		error Error) {
+func SetLDAPSettings(settings *LDAPSettings) error {
 	cSettings, cSettingsSize := encodeLDAPSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -353,11 +289,8 @@ func SetLDAPSettings(settings *LDAPSettings) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetCMPSettings gets CMP settings
-func GetCMPSettings() (
-		settings *CMPSettings, error Error) {
+func GetCMPSettings() (*CMPSettings, error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -366,17 +299,14 @@ func GetCMPSettings() (
 		return nil, makeError(cError, lang)
 	}
 
-	settings = decodeCMPSettings(cSettings, cSettingsSize)
+	settings := decodeCMPSettings(cSettings, cSettingsSize)
 	C.FreeStructFields(cSettings, cSettingsSize)
 
 	return settings, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SetCMPSettings sets CMP settings
-func SetCMPSettings(settings *CMPSettings) (
-		error Error) {
+func SetCMPSettings(settings *CMPSettings) error {
 	cSettings, cSettingsSize := encodeCMPSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -388,11 +318,8 @@ func SetCMPSettings(settings *CMPSettings) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetLogSettings gets log settings
-func GetLogSettings() (
-		settings *LogSettings, error Error) {
+func GetLogSettings() (*LogSettings, error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -401,17 +328,14 @@ func GetLogSettings() (
 		return nil, makeError(cError, lang)
 	}
 
-	settings = decodeLogSettings(cSettings, cSettingsSize)
+	settings := decodeLogSettings(cSettings, cSettingsSize)
 	C.FreeStructFields(cSettings, cSettingsSize)
 
 	return settings, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SetLogSettings sets log settings
-func SetLogSettings(settings *LogSettings) (
-		error Error) {
+func SetLogSettings(settings *LogSettings) error {
 	cSettings, cSettingsSize := encodeLogSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -423,11 +347,8 @@ func SetLogSettings(settings *LogSettings) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetModeSettings gets mode settings
-func GetModeSettings() (
-		settings *ModeSettings, error Error) {
+func GetModeSettings() (*ModeSettings, error) {
 	var cSettings **C.char
 	var cSettingsSize C.ulong
 
@@ -436,17 +357,14 @@ func GetModeSettings() (
 		return nil, makeError(cError, lang)
 	}
 
-	settings = decodeModeSettings(cSettings, cSettingsSize)
+	settings := decodeModeSettings(cSettings, cSettingsSize)
 	C.FreeStructFields(cSettings, cSettingsSize)
 
 	return settings, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SetModeSettings sets mode settings
-func SetModeSettings(settings *ModeSettings) (
-		error Error) {
+func SetModeSettings(settings *ModeSettings) error {
 	cSettings, cSettingsSize := encodeModeSettings(settings)
 	defer C.FreeStructFields(cSettings, cSettingsSize)
 
@@ -458,12 +376,9 @@ func SetModeSettings(settings *ModeSettings) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SetRuntimeParameterInt configures integer runtime
 // parameters of the cryptographic library
-func SetRuntimeParameterInt(name string, value int) (
-		error Error) {
+func SetRuntimeParameterInt(name string, value int) error {
 	cName := C.CString(name)
 	defer C.free(unsafe.Pointer(cName))
 
@@ -476,12 +391,9 @@ func SetRuntimeParameterInt(name string, value int) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SetRuntimeParameterBool configures boolean runtime
 // parameters of the cryptographic library
-func SetRuntimeParameterBool(name string, value bool) (
-		error Error) {
+func SetRuntimeParameterBool(name string, value bool) error {
 	cName := C.CString(name)
 	defer C.free(unsafe.Pointer(cName))
 
@@ -494,12 +406,9 @@ func SetRuntimeParameterBool(name string, value bool) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SetOCSPResponseExpireTime set the confidence interval value (in seconds)
 // to the OCSP response contained in the signed data
-func SetOCSPResponseExpireTime(expireTime int) (
-		error Error) {
+func SetOCSPResponseExpireTime(expireTime int) error {
 	cExpireTime := C.ulong(expireTime)
 
 	cError := C.SetOCSPResponseExpireTime(cExpireTime)
@@ -507,11 +416,8 @@ func SetOCSPResponseExpireTime(expireTime int) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SaveCertificate saves certificate
-func SaveCertificate(certificate []byte) (
-		error Error) {
+func SaveCertificate(certificate []byte) error {
 	cCertificate, cCertificateLength := cbuf(certificate)
 
 	cError := C.SaveCertificate(
@@ -520,11 +426,8 @@ func SaveCertificate(certificate []byte) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SaveCertificates saves certificates
-func SaveCertificates(certificates []byte) (
-		error Error) {
+func SaveCertificates(certificates []byte) error {
 	cCertificates, cCertificatesLength := cbuf(certificates)
 
 	cError := C.SaveCertificates(
@@ -533,11 +436,8 @@ func SaveCertificates(certificates []byte) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SaveCertificatesEx save certificates
-func SaveCertificatesEx(certificates []byte) (
-		error Error) {
+func SaveCertificatesEx(certificates []byte) error {
 	cCertificates, cCertificatesLength := cbuf(certificates)
 
 	cError := C.SaveCertificatesEx(
@@ -546,11 +446,8 @@ func SaveCertificatesEx(certificates []byte) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // ParseCertificateEx gets certificate info
-func ParseCertificateEx(certificate []byte) (
-		info *CertInfoEx, error Error) {
+func ParseCertificateEx(certificate []byte) (*CertInfoEx, error) {
 	cCertificate, cCertificateLength := cbuf(certificate)
 	var cInfo **C.char
 	var cInfoSize C.ulong
@@ -561,18 +458,14 @@ func ParseCertificateEx(certificate []byte) (
 		return nil, makeError(cError, lang)
 	}
 
-	info = decodeCertInfoEx(cInfo, cInfoSize)
+	info := decodeCertInfoEx(cInfo, cInfoSize)
 	C.FreeStructFields(cInfo, cInfoSize)
 
 	return info, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetCertificatesByKeyInfo gets certificates by key info using CMP servers
-func GetCertificatesByKeyInfo(privKeyInfo []byte, cmpServers []string,
-	cmpServersPorts []string) (
-		certs []byte, error Error) {
+func GetCertificatesByKeyInfo(privKeyInfo []byte, cmpServers []string, cmpServersPorts []string) ([]byte, error) {
 	cPrivKeyInfo, cPrivKeyInfoSize := cbuf(privKeyInfo)
 	cCMPServers, cCMPServersSize := cStrings(cmpServers)
 	defer C.FreeStructFields(cCMPServers, cCMPServersSize)
@@ -590,17 +483,14 @@ func GetCertificatesByKeyInfo(privKeyInfo []byte, cmpServers []string,
 		return nil, makeError(cError, lang)
 	}
 
-	certs = C.GoBytes(unsafe.Pointer(cCerts), C.int(cCertsSize))
+	certs := C.GoBytes(unsafe.Pointer(cCerts), C.int(cCertsSize))
 	C.FreeMemory(cCerts)
 
 	return certs, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // EnumKeyMediaTypes enums key media types
-func EnumKeyMediaTypes(typeIndex int) (
-		typeDescription string, error Error) {
+func EnumKeyMediaTypes(typeIndex int) (string, error) {
 	cTypeIndex := C.ulong(typeIndex)
 	var cDescr *C.char
 
@@ -609,17 +499,14 @@ func EnumKeyMediaTypes(typeIndex int) (
 		return "", makeError(cError, lang)
 	}
 
-	typeDescription = C.GoString(cDescr)
+	typeDescription := C.GoString(cDescr)
 	C.free(unsafe.Pointer(cDescr))
 
 	return typeDescription, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // EnumKeyMediaDevices enums key media devices
-func EnumKeyMediaDevices(typeIndex int, deviceIndex int) (
-		deviceDescription string, error Error) {
+func EnumKeyMediaDevices(typeIndex int, deviceIndex int) (string, error) {
 	cTypeIndex := C.ulong(typeIndex)
 	cDeviceIndex := C.ulong(deviceIndex)
 	var cDescr *C.char
@@ -630,22 +517,19 @@ func EnumKeyMediaDevices(typeIndex int, deviceIndex int) (
 		return "", makeError(cError, lang)
 	}
 
-	deviceDescription = C.GoString(cDescr)
+	deviceDescription := C.GoString(cDescr)
 	C.free(unsafe.Pointer(cDescr))
 
 	return deviceDescription, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
-// Generating a private key on key media
+// GeneratePrivateKey2 Generating a private key on key media
 func GeneratePrivateKey2(
-	keyMedia *KeyMedia, setKeyMediaPassword bool, 
+	keyMedia *KeyMedia, setKeyMediaPassword bool,
 	uaKeysType int, uaDSKeysSpec int, uaKEPKeysSpec int,
 	uaParamsPath string, intKeysType int, rsaKeysSpec int,
 	rsaParamsPath string, ecdsaKeysSpec int, ecdsaParamsPath string,
-	userInfo *UserInfo, addExtKeyUsages bool, extKeyUsages string) (
-		requests []RequestInfo, error Error) {
+	userInfo *UserInfo, addExtKeyUsages bool, extKeyUsages string) ([]RequestInfo, error) {
 	cKeyMedia, cKeyMediaSize := encodeKeyMedia(keyMedia)
 	defer C.FreeStructFields(cKeyMedia, cKeyMediaSize)
 	cUserInfo, cUserInfoSize := encodeUserInfo(userInfo)
@@ -692,7 +576,9 @@ func GeneratePrivateKey2(
 		return nil, makeError(cError, lang)
 	}
 
-	for i, _ := range cRequests {
+	var requests []RequestInfo
+
+	for i := range cRequests {
 		if cRequests[i] != nil {
 			request := decodeRequestInfo(
 				cRequests[i], cRequestsSizes[i])
@@ -704,11 +590,8 @@ func GeneratePrivateKey2(
 	return requests, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // IsPrivateKeyReaded checks is private key readed to global library context
-func IsPrivateKeyReaded() (
-		isReaded bool, error Error) {
+func IsPrivateKeyReaded() (bool, error) {
 	var cIsPrivateKeyReaded C.int
 
 	cError := C.IsPrivateKeyReaded(&cIsPrivateKeyReaded)
@@ -716,14 +599,11 @@ func IsPrivateKeyReaded() (
 		return false, makeError(cError, lang)
 	}
 
-	return (cIsPrivateKeyReaded != 0), makeError(cError, lang)
+	return cIsPrivateKeyReaded != 0, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // ReadPrivateKey reads private key from key media to global library context
-func ReadPrivateKey(keyMedia *KeyMedia) (
-		info *CertOwnerInfo, error Error) {
+func ReadPrivateKey(keyMedia *KeyMedia) (*CertOwnerInfo, error) {
 	cKeyMedia, cKeyMediaSize := encodeKeyMedia(keyMedia)
 	defer C.FreeStructFields(cKeyMedia, cKeyMediaSize)
 	var cInfo **C.char
@@ -735,27 +615,21 @@ func ReadPrivateKey(keyMedia *KeyMedia) (
 		return nil, makeError(cError, lang)
 	}
 
-	info = decodeCertOwnerInfo(cInfo, cInfoSize)
+	info := decodeCertOwnerInfo(cInfo, cInfoSize)
 	C.FreeStructFields(cInfo, cInfoSize)
 
 	return info, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // ResetPrivateKey resets private key global library context
-func ResetPrivateKey() (
-		error Error) {
+func ResetPrivateKey() error {
 	cError := C.ResetPrivateKey()
 
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // CtxReadPrivateKey reads private key from key media
-func CtxReadPrivateKey(context *Context, keyMedia *KeyMedia) (
-		pkContext *PrivateKeyContext, info *CertOwnerInfo, error Error) {
+func CtxReadPrivateKey(context *Context, keyMedia *KeyMedia) (*PrivateKeyContext, *CertOwnerInfo, error) {
 	cKeyMedia, cKeyMediaSize := encodeKeyMedia(keyMedia)
 	defer C.FreeStructFields(cKeyMedia, cKeyMediaSize)
 	var cInfo **C.char
@@ -765,27 +639,21 @@ func CtxReadPrivateKey(context *Context, keyMedia *KeyMedia) (
 		return nil, nil, makeError(ErrorBadParameter, lang)
 	}
 
-	pkContext = new(PrivateKeyContext)
+	pkContext := new(PrivateKeyContext)
 
-	cError := C.CtxReadPrivateKey(
-		context.Handle, cKeyMedia, cKeyMediaSize,
-		&pkContext.Handle, &cInfo, &cInfoSize)
+	cError := C.CtxReadPrivateKey(context.Handle, cKeyMedia, cKeyMediaSize, &pkContext.Handle, &cInfo, &cInfoSize)
 	if cError != ErrorNone {
 		return nil, nil, makeError(cError, lang)
 	}
 
-	info = decodeCertOwnerInfo(cInfo, cInfoSize)
+	info := decodeCertOwnerInfo(cInfo, cInfoSize)
 	C.FreeStructFields(cInfo, cInfoSize)
 
 	return pkContext, info, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // CtxReadPrivateKeyBinary reads private key from binary data
-func CtxReadPrivateKeyBinary(
-	context *Context, privateKey []byte, password string) (
-		pkContext *PrivateKeyContext, info *CertOwnerInfo, error Error) {
+func CtxReadPrivateKeyBinary(context *Context, privateKey []byte, password string) (*PrivateKeyContext, *CertOwnerInfo, error) {
 	cPrivateKey, cPrivateKeySize := cbuf(privateKey)
 	cPassword := C.CString(password)
 	defer C.free(unsafe.Pointer(cPassword))
@@ -796,7 +664,7 @@ func CtxReadPrivateKeyBinary(
 		return nil, nil, makeError(ErrorBadParameter, lang)
 	}
 
-	pkContext = new(PrivateKeyContext)
+	pkContext := new(PrivateKeyContext)
 
 	cError := C.CtxReadPrivateKeyBinary(context.Handle,
 		cPrivateKey, cPrivateKeySize, cPassword,
@@ -805,17 +673,14 @@ func CtxReadPrivateKeyBinary(
 		return nil, nil, makeError(cError, lang)
 	}
 
-	info = decodeCertOwnerInfo(cInfo, cInfoSize)
+	info := decodeCertOwnerInfo(cInfo, cInfoSize)
 	C.FreeStructFields(cInfo, cInfoSize)
 
 	return pkContext, info, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // CtxFreePrivateKey frees private key
-func CtxFreePrivateKey(pkContext *PrivateKeyContext) (
-		error Error) {
+func CtxFreePrivateKey(pkContext *PrivateKeyContext) error {
 	if pkContext == nil {
 		return makeError(ErrorBadParameter, lang)
 	}
@@ -825,12 +690,8 @@ func CtxFreePrivateKey(pkContext *PrivateKeyContext) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // CtxGetOwnCertificate gets own certificate
-func CtxGetOwnCertificate(pkContext *PrivateKeyContext,
-	certKeyType int, keyUsage int) (
-		certInfoEx *CertInfoEx, cert []byte, error Error) {
+func CtxGetOwnCertificate(pkContext *PrivateKeyContext, certKeyType int, keyUsage int) (*CertInfoEx, []byte, error) {
 	cCertKeyType := C.ulong(certKeyType)
 	cKeyUsage := C.ulong(keyUsage)
 	var cCertInfoEx **C.char
@@ -849,20 +710,17 @@ func CtxGetOwnCertificate(pkContext *PrivateKeyContext,
 		return nil, nil, makeError(cError, lang)
 	}
 
-	certInfoEx = decodeCertInfoEx(cCertInfoEx, cCertInfoExSize)
+	certInfoEx := decodeCertInfoEx(cCertInfoEx, cCertInfoExSize)
 	C.FreeStructFields(cCertInfoEx, cCertInfoExSize)
 
-	cert = C.GoBytes(unsafe.Pointer(cCert), C.int(cCertSize))
+	cert := C.GoBytes(unsafe.Pointer(cCert), C.int(cCertSize))
 	C.CtxFreeMemory(pkContext.Handle, cCert)
 
 	return certInfoEx, cert, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetKeyInfo gets key information to get key certificates from CMP
-func GetKeyInfo(keyMedia *KeyMedia) (
-		keyInfo []byte, error Error) {
+func GetKeyInfo(keyMedia *KeyMedia) ([]byte, error) {
 	cKeyMedia, cKeyMediaSize := encodeKeyMedia(keyMedia)
 	defer C.FreeStructFields(cKeyMedia, cKeyMediaSize)
 	var cKeyInfo *C.uchar
@@ -874,17 +732,14 @@ func GetKeyInfo(keyMedia *KeyMedia) (
 		return nil, makeError(cError, lang)
 	}
 
-	keyInfo = C.GoBytes(unsafe.Pointer(cKeyInfo), C.int(cKeyInfoSize))
+	keyInfo := C.GoBytes(unsafe.Pointer(cKeyInfo), C.int(cKeyInfoSize))
 	C.FreeMemory(cKeyInfo)
 
 	return keyInfo, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetKeyInfo gets key information to get key certificates from CMP
-func GetKeyInfoBinary(privateKey []byte, password string) (
-		keyInfo []byte, error Error) {
+func GetKeyInfoBinary(privateKey []byte, password string) ([]byte, error) {
 	cPrivateKey, cPrivateKeySize := cbuf(privateKey)
 	cPassword := C.CString(password)
 	defer C.free(unsafe.Pointer(cPassword))
@@ -898,17 +753,14 @@ func GetKeyInfoBinary(privateKey []byte, password string) (
 		return nil, makeError(cError, lang)
 	}
 
-	keyInfo = C.GoBytes(unsafe.Pointer(cKeyInfo), C.int(cKeyInfoSize))
+	keyInfo := C.GoBytes(unsafe.Pointer(cKeyInfo), C.int(cKeyInfoSize))
 	C.FreeMemory(cKeyInfo)
 
 	return keyInfo, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // EnumJKSPrivateKeys enums the private keys in the JKS container
-func EnumJKSPrivateKeys(container []byte, index int) (
-		keyAlias string, error Error) {
+func EnumJKSPrivateKeys(container []byte, index int) (string, error) {
 	cContainer, cContainerLength := cbuf(container)
 	cIndex := C.ulong(index)
 	var cKeyAlias *C.char
@@ -919,17 +771,14 @@ func EnumJKSPrivateKeys(container []byte, index int) (
 		return "", makeError(cError, lang)
 	}
 
-	keyAlias = C.GoString(cKeyAlias)
+	keyAlias := C.GoString(cKeyAlias)
 	C.free(unsafe.Pointer(cKeyAlias))
 
 	return keyAlias, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetJKSPrivateKey gets the private key from the JKS container
-func GetJKSPrivateKey(container []byte, keyAlias string) (
-		privateKey []byte, certificates [][]byte, error Error) {
+func GetJKSPrivateKey(container []byte, keyAlias string) ([]byte, [][]byte, error) {
 	cContainer, cContainerLength := cbuf(container)
 	cKeyAlias := C.CString(keyAlias)
 	defer C.free(unsafe.Pointer(cKeyAlias))
@@ -947,23 +796,17 @@ func GetJKSPrivateKey(container []byte, keyAlias string) (
 		return nil, nil, makeError(cError, lang)
 	}
 
-	privateKey = C.GoBytes(
-		unsafe.Pointer(cPrivateKey), C.int(cPrivateKeySize))
+	privateKey := C.GoBytes(unsafe.Pointer(cPrivateKey), C.int(cPrivateKeySize))
 	C.FreeMemory(cPrivateKey)
 
-	certificates = gobufs(cCertificatesCount, 
-		cCertificates, cCertificatesSizes)
-	C.FreeCertificatesArray(cCertificatesCount, 
-		cCertificates, cCertificatesSizes)
+	certificates := gobufs(cCertificatesCount, cCertificates, cCertificatesSizes)
+	C.FreeCertificatesArray(cCertificatesCount, cCertificates, cCertificatesSizes)
 
 	return privateKey, certificates, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // CtxHashData hashes data with context
-func CtxHashData(context *Context, hashAlgo int, data []byte) (
-		hash []byte, error Error) {
+func CtxHashData(context *Context, hashAlgo int, data []byte) ([]byte, error) {
 	cData, cDataSize := cbuf(data)
 	cHashAlgo := C.ulong(hashAlgo)
 	var cHash *C.uchar
@@ -979,23 +822,20 @@ func CtxHashData(context *Context, hashAlgo int, data []byte) (
 		return nil, makeError(cError, lang)
 	}
 
-	hash = C.GoBytes(unsafe.Pointer(cHash), C.int(cHashSize))
+	hash := C.GoBytes(unsafe.Pointer(cHash), C.int(cHashSize))
 	C.CtxFreeMemory(context.Handle, cHash)
 
 	return hash, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetSignType gets information about the signature type
-func GetSignType(signIndex int, sign []byte) (
-		signType int, error Error) {
+func GetSignType(signIndex int, sign []byte) (int, error) {
 	cSign, cSignLength := cbuf(sign)
 	cSignIndex := C.ulong(signIndex)
 	var cSignType C.ulong
 
 	cError := C.GetSignType(cSignIndex,
-		cSign, cSignLength, &cSignType);
+		cSign, cSignLength, &cSignType)
 	if cError != ErrorNone {
 		return 0, makeError(cError, lang)
 	}
@@ -1003,11 +843,8 @@ func GetSignType(signIndex int, sign []byte) (
 	return int(cSignType), makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetSignsCount returns number of signers from signature
-func GetSignsCount(sign []byte) (
-		signsCount int, error Error) {
+func GetSignsCount(sign []byte) (int, error) {
 	cSign, cSignSize := cbuf(sign)
 	var cSignsCount C.ulong
 
@@ -1019,34 +856,27 @@ func GetSignsCount(sign []byte) (
 	return int(cSignsCount), makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetSigner gets the signer from signature
-func GetSigner(signIndex int, sign []byte) (
-		signerInfo []byte, error Error) {
+func GetSigner(signIndex int, sign []byte) ([]byte, error) {
 	cSign, cSignLength := cbuf(sign)
 	cSignIndex := C.ulong(signIndex)
 	var cSignerInfo *C.uchar
 	var cSignerInfoLength C.ulong
 
-	cError := C.GetSigner(cSignIndex, 
+	cError := C.GetSigner(cSignIndex,
 		cSign, cSignLength, &cSignerInfo, &cSignerInfoLength)
 	if cError != ErrorNone {
 		return nil, makeError(cError, lang)
 	}
 
-	signerInfo = C.GoBytes(
-		unsafe.Pointer(cSignerInfo), C.int(cSignerInfoLength))
+	signerInfo := C.GoBytes(unsafe.Pointer(cSignerInfo), C.int(cSignerInfoLength))
 	C.FreeMemory(cSignerInfo)
 
 	return signerInfo, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetSignerInfo gets signer information from sign for signIndex
-func GetSignerInfo(signIndex int, sign []byte) (
-		certInfoEx *CertInfoEx, cert []byte, error Error) {
+func GetSignerInfo(signIndex int, sign []byte) (*CertInfoEx, []byte, error) {
 	cSignIndex := C.ulong(signIndex)
 	cSign, cSignSize := cbuf(sign)
 	var cCertInfoEx **C.char
@@ -1061,20 +891,17 @@ func GetSignerInfo(signIndex int, sign []byte) (
 		return nil, nil, makeError(cError, lang)
 	}
 
-	certInfoEx = decodeCertInfoEx(cCertInfoEx, cCertInfoExSize)
+	certInfoEx := decodeCertInfoEx(cCertInfoEx, cCertInfoExSize)
 	C.FreeStructFields(cCertInfoEx, cCertInfoExSize)
 
-	cert = C.GoBytes(unsafe.Pointer(cCert), C.int(cCertSize))
+	cert := C.GoBytes(unsafe.Pointer(cCert), C.int(cCertSize))
 	C.FreeMemory(cCert)
 
 	return certInfoEx, cert, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // VerifyDataSpecific verifies sign of data for signIndex signer
-func VerifyDataSpecific(data []byte, signIndex int, sign []byte) (
-		signInfo *SignerInfo, error Error) {
+func VerifyDataSpecific(data []byte, signIndex int, sign []byte) (*SignerInfo, error) {
 	cData, cDataSize := cbuf(data)
 	cSignIndex := C.ulong(signIndex)
 	cSign, cSignSize := cbuf(sign)
@@ -1088,17 +915,14 @@ func VerifyDataSpecific(data []byte, signIndex int, sign []byte) (
 		return nil, makeError(cError, lang)
 	}
 
-	signInfo = decodeSignerInfo(cSignInfo, cSignInfoSize)
+	signInfo := decodeSignerInfo(cSignInfo, cSignInfoSize)
 	C.FreeStructFields(cSignInfo, cSignInfoSize)
 
 	return signInfo, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // VerifyDataInternalSpecific verifies sign for signIndex signer
-func VerifyDataInternalSpecific(signIndex int, sign []byte) (
-		signInfo *SignerInfo, data []byte, error Error) {
+func VerifyDataInternalSpecific(signIndex int, sign []byte) (*SignerInfo, []byte, error) {
 	cSignIndex := C.ulong(signIndex)
 	cSign, cSignSize := cbuf(sign)
 	var cData *C.uchar
@@ -1113,20 +937,17 @@ func VerifyDataInternalSpecific(signIndex int, sign []byte) (
 		return nil, nil, makeError(cError, lang)
 	}
 
-	data = C.GoBytes(unsafe.Pointer(cData), C.int(cDataSize))
+	data := C.GoBytes(unsafe.Pointer(cData), C.int(cDataSize))
 	C.FreeMemory(cData)
 
-	signInfo = decodeSignerInfo(cSignInfo, cSignInfoSize)
+	signInfo := decodeSignerInfo(cSignInfo, cSignInfoSize)
 	C.FreeStructFields(cSignInfo, cSignInfoSize)
 
 	return signInfo, data, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // VerifyHashSpecific verifies sign of hash for signIndex signer
-func VerifyHashSpecific(hash []byte, signIndex int, sign []byte) (
-		signInfo *SignerInfo, error Error) {
+func VerifyHashSpecific(hash []byte, signIndex int, sign []byte) (*SignerInfo, error) {
 	cHash, cHashSize := cbuf(hash)
 	cSignIndex := C.ulong(signIndex)
 	cSign, cSignSize := cbuf(sign)
@@ -1140,17 +961,14 @@ func VerifyHashSpecific(hash []byte, signIndex int, sign []byte) (
 		return nil, makeError(cError, lang)
 	}
 
-	signInfo = decodeSignerInfo(cSignInfo, cSignInfoSize)
+	signInfo := decodeSignerInfo(cSignInfo, cSignInfoSize)
 	C.FreeStructFields(cSignInfo, cSignInfoSize)
 
 	return signInfo, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // CreateEmptySign creates an empty signature
-func CreateEmptySign(data []byte) (
-		sign []byte, error Error) {
+func CreateEmptySign(data []byte) ([]byte, error) {
 	var cData *C.uchar
 	var cDataLength C.ulong
 	var cSign *C.uchar
@@ -1164,19 +982,15 @@ func CreateEmptySign(data []byte) (
 		return nil, makeError(cError, lang)
 	}
 
-	sign = C.GoBytes(unsafe.Pointer(cSign), C.int(cSignLength))
+	sign := C.GoBytes(unsafe.Pointer(cSign), C.int(cSignLength))
 	C.FreeMemory(cSign)
 
 	return sign, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
-// AppendValidationDataToSignerEx Adds additional verification 
+// AppendValidationDataToSignerEx Adds additional verification
 // information to the signer information
-func AppendValidationDataToSignerEx(previousSigner []byte,
-	certificate []byte, signType int) (
-		signerInfo []byte, error Error) {
+func AppendValidationDataToSignerEx(previousSigner []byte, certificate []byte, signType int) ([]byte, error) {
 	cPreviousSigner, cPreviousSignerLength := cbuf(previousSigner)
 	cCertificate, cCertificateLength := cbuf(certificate)
 	cSignType := C.ulong(signType)
@@ -1191,18 +1005,14 @@ func AppendValidationDataToSignerEx(previousSigner []byte,
 		return nil, makeError(cError, lang)
 	}
 
-	signerInfo = C.GoBytes(
-		unsafe.Pointer(cSignerInfo), C.int(cSignerInfoLength))
+	signerInfo := C.GoBytes(unsafe.Pointer(cSignerInfo), C.int(cSignerInfoLength))
 	C.FreeMemory(cSignerInfo)
 
 	return signerInfo, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // AppendSigner adds information about the signer to the signature
-func AppendSigner(signer []byte, certificate []byte, previousSign []byte) (
-		sign []byte, error Error) {
+func AppendSigner(signer []byte, certificate []byte, previousSign []byte) ([]byte, error) {
 	cSigner, cSignerLength := cbuf(signer)
 	cCertificate, cCertificateLength := cbuf(certificate)
 	cPreviousSign, cPreviousSignLength := cbuf(previousSign)
@@ -1218,55 +1028,46 @@ func AppendSigner(signer []byte, certificate []byte, previousSign []byte) (
 		return nil, makeError(cError, lang)
 	}
 
-	sign = C.GoBytes(unsafe.Pointer(cSign), C.int(cSignLength))
+	sign := C.GoBytes(unsafe.Pointer(cSign), C.int(cSignLength))
 	C.FreeMemory(cSign)
 
 	return sign, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // IsDataInSignedDataAvailable gets information about
 // the presence of data in signed data
-func IsDataInSignedDataAvailable(signedData []byte) (
-		isAvaliable bool, error Error) {
+func IsDataInSignedDataAvailable(signedData []byte) (bool, error) {
 	cSignedData, cSignedDataLength := cbuf(signedData)
 	var cIsAvaliable C.int
 
 	cError := C.IsDataInSignedDataAvailable(
 		cSignedData, cSignedDataLength, &cIsAvaliable)
 
-	return (cIsAvaliable != 0), makeError(cError, lang)
+	return cIsAvaliable != 0, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetDataFromSignedData gets the data contained in signed data
-func GetDataFromSignedData(signedData []byte) (
-		data []byte, error Error) {
+func GetDataFromSignedData(signedData []byte) ([]byte, error) {
 	cSignedData, cSignedDataLength := cbuf(signedData)
 	var cData *C.uchar
 	var cDataLength C.ulong
 
 	cError := C.GetDataFromSignedData(
-		cSignedData, cSignedDataLength, 
+		cSignedData, cSignedDataLength,
 		&cData, &cDataLength)
 	if cError != ErrorNone {
 		return nil, makeError(cError, lang)
 	}
 
-	data = C.GoBytes(unsafe.Pointer(cData), C.int(cDataLength))
+	data := C.GoBytes(unsafe.Pointer(cData), C.int(cDataLength))
 	C.FreeMemory(cData)
 
 	return data, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
-// GetCertificateFromSignedData gets certificate from signedData or 
+// GetCertificateFromSignedData gets certificate from signedData or
 // p7b archive by index
-func GetCertificateFromSignedData(index int, signedData []byte) (
-		certInfoEx *CertInfoEx, cert []byte, error Error) {
+func GetCertificateFromSignedData(index int, signedData []byte) (*CertInfoEx, []byte, error) {
 	cIndex := C.ulong(index)
 	cSignedData, cSignedDataSize := cbuf(signedData)
 	var cCertInfoEx **C.char
@@ -1281,20 +1082,17 @@ func GetCertificateFromSignedData(index int, signedData []byte) (
 		return nil, nil, makeError(cError, lang)
 	}
 
-	certInfoEx = decodeCertInfoEx(cCertInfoEx, cCertInfoExSize)
+	certInfoEx := decodeCertInfoEx(cCertInfoEx, cCertInfoExSize)
 	C.FreeStructFields(cCertInfoEx, cCertInfoExSize)
 
-	cert = C.GoBytes(unsafe.Pointer(cCert), C.int(cCertSize))
+	cert := C.GoBytes(unsafe.Pointer(cCert), C.int(cCertSize))
 	C.FreeMemory(cCert)
 
 	return certInfoEx, cert, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // GetSignTimeInfo gets sign information from sign for signIndex
-func GetSignTimeInfo(signIndex int, sign []byte) (
-		timeInfo *TimeInfo, error Error) {
+func GetSignTimeInfo(signIndex int, sign []byte) (*TimeInfo, error) {
 	cSignIndex := C.ulong(signIndex)
 	cSign, cSignSize := cbuf(sign)
 	var cTimeInfo **C.char
@@ -1307,18 +1105,14 @@ func GetSignTimeInfo(signIndex int, sign []byte) (
 		return nil, makeError(cError, lang)
 	}
 
-	timeInfo = decodeTimeInfo(cTimeInfo, cTimeInfoSize)
+	timeInfo := decodeTimeInfo(cTimeInfo, cTimeInfoSize)
 	C.FreeStructFields(cTimeInfo, cTimeInfoSize)
 
 	return timeInfo, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // CtxSignHashValue signs hash value
-func CtxSignHashValue(pkContext *PrivateKeyContext, signAlgo int,
-	hash []byte, appendCert bool) (
-		sign []byte, error Error) {
+func CtxSignHashValue(pkContext *PrivateKeyContext, signAlgo int, hash []byte, appendCert bool) ([]byte, error) {
 	cHash, cHashLength := cbuf(hash)
 	cSignAlgo := C.ulong(signAlgo)
 	cAppendCert := toCBool(appendCert)
@@ -1336,18 +1130,14 @@ func CtxSignHashValue(pkContext *PrivateKeyContext, signAlgo int,
 		return nil, makeError(cError, lang)
 	}
 
-	sign = C.GoBytes(unsafe.Pointer(cSign), C.int(cSignSize))
+	sign := C.GoBytes(unsafe.Pointer(cSign), C.int(cSignSize))
 	C.CtxFreeMemory(pkContext.Handle, cSign)
 
 	return sign, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // CtxSignData signs data
-func CtxSignData(pkContext *PrivateKeyContext, signAlgo int, data []byte,
-	external bool, appendCert bool) (
-		sign []byte, error Error) {
+func CtxSignData(pkContext *PrivateKeyContext, signAlgo int, data []byte, external bool, appendCert bool) ([]byte, error) {
 	cData, cDataLength := cbuf(data)
 	cSignAlgo := C.ulong(signAlgo)
 	cAppendCert := toCBool(appendCert)
@@ -1366,19 +1156,15 @@ func CtxSignData(pkContext *PrivateKeyContext, signAlgo int, data []byte,
 		return nil, makeError(cError, lang)
 	}
 
-	sign = C.GoBytes(unsafe.Pointer(cSign), C.int(cSignSize))
+	sign := C.GoBytes(unsafe.Pointer(cSign), C.int(cSignSize))
 	C.CtxFreeMemory(pkContext.Handle, cSign)
 
 	return sign, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // CtxCreateSignerEx Creates information about the signer with
 // additional verification information
-func CtxCreateSignerEx(pkContext *PrivateKeyContext,
-	signAlgo int, hash []byte, noContentTimeStamp bool, signType int) (
-		signerInfo []byte, error Error) {
+func CtxCreateSignerEx(pkContext *PrivateKeyContext, signAlgo int, hash []byte, noContentTimeStamp bool, signType int) ([]byte, error) {
 	cSignAlgo := C.ulong(signAlgo)
 	cSignType := C.ulong(signType)
 	cNoContentTimeStamp := toCBool(noContentTimeStamp)
@@ -1393,18 +1179,14 @@ func CtxCreateSignerEx(pkContext *PrivateKeyContext,
 		return nil, makeError(cError, lang)
 	}
 
-	signerInfo = C.GoBytes(
-		unsafe.Pointer(cSignerInfo), C.int(cSignerInfoLength))
+	signerInfo := C.GoBytes(unsafe.Pointer(cSignerInfo), C.int(cSignerInfoLength))
 	C.FreeMemory(cSignerInfo)
 
 	return signerInfo, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // RawEnvelopData envelop data with raw algorithm
-func RawEnvelopData(recipientCert []byte, data []byte) (
-		envelopedData []byte, error Error) {
+func RawEnvelopData(recipientCert []byte, data []byte) ([]byte, error) {
 	cRecipientCert, cRecipientCertSize := cbuf(recipientCert)
 	cData, cDataSize := cbuf(data)
 	var cEnvelopedData *C.uchar
@@ -1416,18 +1198,14 @@ func RawEnvelopData(recipientCert []byte, data []byte) (
 		return nil, makeError(cError, lang)
 	}
 
-	envelopedData = C.GoBytes(unsafe.Pointer(cEnvelopedData),
-		C.int(cEnvelopedDataSize))
+	envelopedData := C.GoBytes(unsafe.Pointer(cEnvelopedData), C.int(cEnvelopedDataSize))
 	C.FreeMemory(cEnvelopedData)
 
 	return envelopedData, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // RawDevelopData develop data with raw algorithm
-func RawDevelopData(envelopedData []byte) (
-		data []byte, senderInfo *SenderInfo, error Error) {
+func RawDevelopData(envelopedData []byte) ([]byte, *SenderInfo, error) {
 	cEnvelopedData, cEnvelopedDataSize := cbuf(envelopedData)
 	var cData *C.uchar
 	var cDataSize C.ulong
@@ -1440,22 +1218,17 @@ func RawDevelopData(envelopedData []byte) (
 		return nil, nil, makeError(cError, lang)
 	}
 
-	data = C.GoBytes(unsafe.Pointer(cData), C.int(cDataSize))
+	data := C.GoBytes(unsafe.Pointer(cData), C.int(cDataSize))
 	C.FreeMemory(cData)
 
-	senderInfo = decodeSenderInfo(cSenderInfo, cSenderInfoSize)
+	senderInfo := decodeSenderInfo(cSenderInfo, cSenderInfoSize)
 	C.FreeStructFields(cSenderInfo, cSenderInfoSize)
 
 	return data, senderInfo, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // CtxEnvelopData envelopes data
-func CtxEnvelopData(pkContext *PrivateKeyContext,
-	clientsCerts [][]byte, clientAppendType int, signData bool,
-	appendCert bool, data []byte) (
-		envelopedData []byte, error Error) {
+func CtxEnvelopData(pkContext *PrivateKeyContext, clientsCerts [][]byte, clientAppendType int, signData bool, appendCert bool, data []byte) ([]byte, error) {
 	cClientsData, cClientsDataSize := cbuf(data)
 	cClientCertsCount, cClientCerts, cClientsCertsSizes := cbufs(clientsCerts)
 	defer cbufsFree(cClientCertsCount, cClientCerts, cClientsCertsSizes)
@@ -1479,19 +1252,14 @@ func CtxEnvelopData(pkContext *PrivateKeyContext,
 		return nil, makeError(cError, lang)
 	}
 
-	envelopedData = C.GoBytes(
-		unsafe.Pointer(cEnvelopedData), C.int(cEnvelopedDataSize))
+	envelopedData := C.GoBytes(unsafe.Pointer(cEnvelopedData), C.int(cEnvelopedDataSize))
 	C.CtxFreeMemory(pkContext.Handle, cEnvelopedData)
 
 	return envelopedData, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // CtxDevelopData developes data
-func CtxDevelopData(pkContext *PrivateKeyContext,
-	envelopedData []byte, senderCert []byte) (
-		data []byte, senderInfo *SenderInfo, error Error) {
+func CtxDevelopData(pkContext *PrivateKeyContext, envelopedData []byte, senderCert []byte) ([]byte, *SenderInfo, error) {
 	cEnvelopedData, cEnvelopedDataSize := cbuf(envelopedData)
 	cSenderCert, cSenderCertSize := cbuf(senderCert)
 	var cData *C.uchar
@@ -1511,20 +1279,17 @@ func CtxDevelopData(pkContext *PrivateKeyContext,
 		return nil, nil, makeError(cError, lang)
 	}
 
-	data = C.GoBytes(unsafe.Pointer(cData), C.int(cDataSize))
+	data := C.GoBytes(unsafe.Pointer(cData), C.int(cDataSize))
 	C.CtxFreeMemory(pkContext.Handle, cData)
 
-	senderInfo = decodeSenderInfo(cSenderInfo, cSenderInfoSize)
+	senderInfo := decodeSenderInfo(cSenderInfo, cSenderInfoSize)
 	C.FreeStructFields(cSenderInfo, cSenderInfoSize)
 
 	return data, senderInfo, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SessionDestroy frees session context
-func SessionDestroy(session *Session) (
-		error Error) {
+func SessionDestroy(session *Session) error {
 	if session == nil {
 		return makeError(ErrorBadParameter, lang)
 	}
@@ -1534,11 +1299,8 @@ func SessionDestroy(session *Session) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SessionGetPeerCertificateInfo get peer certificate for session
-func SessionGetPeerCertificateInfo(session *Session) (
-		info *CertInfo, error Error) {
+func SessionGetPeerCertificateInfo(session *Session) (*CertInfo, error) {
 	var cInfo **C.char
 	var cInfoSize C.ulong
 
@@ -1552,21 +1314,18 @@ func SessionGetPeerCertificateInfo(session *Session) (
 		return nil, makeError(cError, lang)
 	}
 
-	info = decodeCertInfo(cInfo, cInfoSize)
+	info := decodeCertInfo(cInfo, cInfoSize)
 	C.FreeStructFields(cInfo, cInfoSize)
 
 	return info, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // ClientRawMultiSessionCreate creates raw multi user session by client
-func ClientRawMultiSessionCreate(expireTime int, serverData []byte) (
-		session *Session, error Error) {
+func ClientRawMultiSessionCreate(expireTime int, serverData []byte) (*Session, error) {
 	cExpireTime := C.ulong(expireTime)
 	cServerData, cServerDataSize := cbuf(serverData)
 
-	session = new(Session)
+	session := new(Session)
 
 	cError := C.ClientRawMultiSessionCreate(
 		cExpireTime, cServerData, cServerDataSize, &session.Handle)
@@ -1577,18 +1336,15 @@ func ClientRawMultiSessionCreate(expireTime int, serverData []byte) (
 	return session, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // ServerRawMultiSessionCreate creates raw multi user session by server
-func ServerRawMultiSessionCreate(expireTime int, clientsCerts [][]byte) (
-		session *Session, clientsData []byte, error Error) {
+func ServerRawMultiSessionCreate(expireTime int, clientsCerts [][]byte) (*Session, []byte, error) {
 	cExpireTime := C.ulong(expireTime)
 	cClientCertsCount, cClientCerts, cClientsCertsSizes := cbufs(clientsCerts)
 	defer cbufsFree(cClientCertsCount, cClientCerts, cClientsCertsSizes)
 	var cClientsData *C.uchar
 	var cClientsDataSize C.ulong
 
-	session = new(Session)
+	session := new(Session)
 
 	cError := C.ServerRawMultiSessionCreate(
 		cExpireTime, cClientCertsCount, cClientCerts, cClientsCertsSizes,
@@ -1597,18 +1353,15 @@ func ServerRawMultiSessionCreate(expireTime int, clientsCerts [][]byte) (
 		return nil, nil, makeError(cError, lang)
 	}
 
-	clientsData = C.GoBytes(unsafe.Pointer(cClientsData),
+	clientsData := C.GoBytes(unsafe.Pointer(cClientsData),
 		C.int(cClientsDataSize))
 	C.FreeMemory(cClientsData)
 
 	return session, clientsData, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // RawMultiSessionAddClients creates new clients data for raw multi user session
-func RawMultiSessionAddClients(session *Session, clientsCerts [][]byte) (
-		clientsData []byte, error Error) {
+func RawMultiSessionAddClients(session *Session, clientsCerts [][]byte) ([]byte, error) {
 	cClientCertsCount, cClientCerts, cClientsCertsSizes := cbufs(clientsCerts)
 	defer cbufsFree(cClientCertsCount, cClientCerts, cClientsCertsSizes)
 	var cClientsData *C.uchar
@@ -1625,18 +1378,14 @@ func RawMultiSessionAddClients(session *Session, clientsCerts [][]byte) (
 		return nil, makeError(cError, lang)
 	}
 
-	clientsData = C.GoBytes(unsafe.Pointer(cClientsData),
-		C.int(cClientsDataSize))
+	clientsData := C.GoBytes(unsafe.Pointer(cClientsData), C.int(cClientsDataSize))
 	C.FreeMemory(cClientsData)
 
 	return clientsData, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SessionEncrypt encrypts data with session
-func SessionEncrypt(session *Session, data []byte) (
-		encryptedData []byte, error Error) {
+func SessionEncrypt(session *Session, data []byte) ([]byte, error) {
 	cData, cDataSize := cbuf(data)
 	var cEncryptedData *C.uchar
 	var cEncryptedDataSize C.ulong
@@ -1651,18 +1400,14 @@ func SessionEncrypt(session *Session, data []byte) (
 		return nil, makeError(cError, lang)
 	}
 
-	encryptedData = C.GoBytes(unsafe.Pointer(cEncryptedData),
-		C.int(cEncryptedDataSize))
+	encryptedData := C.GoBytes(unsafe.Pointer(cEncryptedData), C.int(cEncryptedDataSize))
 	C.FreeMemory(cEncryptedData)
 
 	return encryptedData, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // SessionDecrypt decrypts data with session
-func SessionDecrypt(session *Session, encryptedData []byte) (
-		data []byte, error Error) {
+func SessionDecrypt(session *Session, encryptedData []byte) ([]byte, error) {
 	cEncryptedData, cEncryptedDataSize := cbuf(encryptedData)
 	var cData *C.uchar
 	var cDataSize C.ulong
@@ -1677,48 +1422,39 @@ func SessionDecrypt(session *Session, encryptedData []byte) (
 		return nil, makeError(cError, lang)
 	}
 
-	data = C.GoBytes(unsafe.Pointer(cData), C.int(cDataSize))
+	data := C.GoBytes(unsafe.Pointer(cData), C.int(cDataSize))
 	C.FreeMemory(cData)
 
 	return data, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // CtxCreate creates context
-func CtxCreate() (
-		context *Context, error Error) {
-	context = new(Context)
+func CtxCreate() (*Context, error) {
+	ctx := new(Context)
 
-	cError := C.CtxCreate(&context.Handle)
+	cError := C.CtxCreate(&ctx.Handle)
 	if cError != ErrorNone {
 		return nil, makeError(cError, lang)
 	}
 
-	return context, makeError(cError, lang)
+	return ctx, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // CtxFree frees context
-func CtxFree(context *Context) (
-		error Error) {
-	if context == nil {
+func CtxFree(ctx *Context) error {
+	if ctx == nil {
 		return makeError(ErrorBadParameter, lang)
 	}
 
-	cError := C.CtxFree(context.Handle)
+	cError := C.CtxFree(ctx.Handle)
 
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // AlgoCtxCreate creates algorithm context
-func AlgoCtxCreate(algo int) (
-		algoContext *AlgoContext, error Error) {
+func AlgoCtxCreate(algo int) (*AlgoContext, error) {
 	cAlgo := C.ulong(algo)
-	algoContext = new(AlgoContext)
+	algoContext := new(AlgoContext)
 
 	cError := C.AlgoCtxCreate(cAlgo, &algoContext.Handle)
 	if cError != ErrorNone {
@@ -1728,11 +1464,8 @@ func AlgoCtxCreate(algo int) (
 	return algoContext, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // AlgoCtxGenerateKey generates algorithm key
-func AlgoCtxGenerateKey(algoContext *AlgoContext) (
-		error Error) {
+func AlgoCtxGenerateKey(algoContext *AlgoContext) error {
 	if algoContext == nil {
 		return makeError(ErrorBadParameter, lang)
 	}
@@ -1745,11 +1478,8 @@ func AlgoCtxGenerateKey(algoContext *AlgoContext) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // AlgoCtxSetKey sets algorithm key
-func AlgoCtxSetKey(algoContext *AlgoContext, key []byte, iv []byte) (
-		error Error) {
+func AlgoCtxSetKey(algoContext *AlgoContext, key []byte, iv []byte) error {
 	cKey, cKeySize := cbuf(key)
 	cIV, cIVSize := cbuf(iv)
 
@@ -1766,11 +1496,8 @@ func AlgoCtxSetKey(algoContext *AlgoContext, key []byte, iv []byte) (
 	return makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // AlgoCtxGetKey gets algorithm key
-func AlgoCtxGetKey(algoContext *AlgoContext) (
-		key []byte, iv []byte, error Error) {
+func AlgoCtxGetKey(algoContext *AlgoContext) ([]byte, []byte, error) {
 	var cKeySize C.ulong
 	var cIVSize C.ulong
 
@@ -1795,17 +1522,14 @@ func AlgoCtxGetKey(algoContext *AlgoContext) (
 		return nil, nil, makeError(cError, lang)
 	}
 
-	key = C.GoBytes(unsafe.Pointer(cKey), C.int(cKeySize))
-	iv = C.GoBytes(unsafe.Pointer(cIV), C.int(cIVSize))
+	key := C.GoBytes(unsafe.Pointer(cKey), C.int(cKeySize))
+	iv := C.GoBytes(unsafe.Pointer(cIV), C.int(cIVSize))
 
 	return key, iv, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // AlgoCtxEncrypt encrypts data
-func AlgoCtxEncrypt(algoContext *AlgoContext, data []byte) (
-		encryptedData []byte, error Error) {
+func AlgoCtxEncrypt(algoContext *AlgoContext, data []byte) ([]byte, error) {
 	cData, cDataSize := cbuf(data)
 
 	if algoContext == nil {
@@ -1818,16 +1542,13 @@ func AlgoCtxEncrypt(algoContext *AlgoContext, data []byte) (
 		return nil, makeError(cError, lang)
 	}
 
-	encryptedData = C.GoBytes(unsafe.Pointer(cData), C.int(cDataSize))
+	encryptedData := C.GoBytes(unsafe.Pointer(cData), C.int(cDataSize))
 
 	return encryptedData, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
-// AlgoCtxEncrypt decrypts data
-func AlgoCtxDecrypt(algoContext *AlgoContext, encryptedData []byte) (
-		data []byte, error Error) {
+// AlgoCtxDecrypt decrypts data
+func AlgoCtxDecrypt(algoContext *AlgoContext, encryptedData []byte) ([]byte, error) {
 	cEncryptedData, cEncryptedDataSize := cbuf(encryptedData)
 
 	if algoContext == nil {
@@ -1840,17 +1561,13 @@ func AlgoCtxDecrypt(algoContext *AlgoContext, encryptedData []byte) (
 		return nil, makeError(cError, lang)
 	}
 
-	data = C.GoBytes(unsafe.Pointer(cEncryptedData),
-		C.int(cEncryptedDataSize))
+	data := C.GoBytes(unsafe.Pointer(cEncryptedData), C.int(cEncryptedDataSize))
 
 	return data, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // AlgoCtxGetDataMAC gets data MAC
-func AlgoCtxGetDataMAC(algoContext *AlgoContext, data []byte, macSize int) (
-		mac []byte, error Error) {
+func AlgoCtxGetDataMAC(algoContext *AlgoContext, data []byte, macSize int) ([]byte, error) {
 	cData, cDataSize := cbuf(data)
 	cMacSize := C.ulong(macSize)
 
@@ -1867,16 +1584,13 @@ func AlgoCtxGetDataMAC(algoContext *AlgoContext, data []byte, macSize int) (
 		return nil, makeError(cError, lang)
 	}
 
-	mac = C.GoBytes(unsafe.Pointer(cMac), C.int(cMacSize))
+	mac := C.GoBytes(unsafe.Pointer(cMac), C.int(cMacSize))
 
 	return mac, makeError(cError, lang)
 }
 
-//-----------------------------------------------------------------------------
-
 // AlgoCtxFree frees algorithm context
-func AlgoCtxFree(algoContext *AlgoContext) (
-		error Error) {
+func AlgoCtxFree(algoContext *AlgoContext) error {
 	if algoContext == nil {
 		return makeError(ErrorBadParameter, lang)
 	}
@@ -1885,5 +1599,3 @@ func AlgoCtxFree(algoContext *AlgoContext) (
 
 	return makeError(cError, lang)
 }
-
-//=============================================================================
