@@ -42,8 +42,8 @@ func NewEncrypter(algo int) (*Encrypter, error) {
 	}
 
 	runtime.AddCleanup(e, func(ctx *src.AlgoContext) {
-		src.AlgoCtxFree(ctx)
-		src.Finalize()
+		_ = src.AlgoCtxFree(ctx)
+		_ = src.Finalize()
 	}, e.ctx)
 
 	return e, nil

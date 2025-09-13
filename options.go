@@ -9,9 +9,9 @@ type Option func()
 func OptionSaveSetting(flag bool) Option {
 	return func() {
 		if flag {
-			src.SetRuntimeParameterInt(src.SaveSettingsParameter, src.SettingsIDAll)
+			_ = src.SetRuntimeParameterInt(src.SaveSettingsParameter, src.SettingsIDAll)
 		} else {
-			src.SetRuntimeParameterInt(src.SaveSettingsParameter, src.SettingsIDNone)
+			_ = src.SetRuntimeParameterInt(src.SaveSettingsParameter, src.SettingsIDNone)
 		}
 	}
 }

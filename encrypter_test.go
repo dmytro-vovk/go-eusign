@@ -10,6 +10,8 @@ import (
 )
 
 func TestEncrypter(t *testing.T) {
+	t.Logf("Testing Encrypter")
+	defer t.Logf("Testing Encrypter complete")
 	e, err := eusign.NewEncrypter(src.AlgoDSTU7624_CFB_256)
 	require.NoError(t, err)
 

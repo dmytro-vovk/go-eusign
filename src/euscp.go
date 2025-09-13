@@ -556,7 +556,7 @@ func GeneratePrivateKey2(
 	var cRequestsSizes [4](C.ulong)
 	var cExtKeyUsages *C.char = nil
 
-	if addExtKeyUsages == true {
+	if addExtKeyUsages {
 		cExtKeyUsages = C.CString(extKeyUsages)
 		defer C.free(unsafe.Pointer(cExtKeyUsages))
 	}

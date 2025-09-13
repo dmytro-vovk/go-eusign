@@ -156,7 +156,7 @@ func (s *Signer) Hash(data []byte, algo HashAlgo) ([]byte, error) {
 		return nil, fmt.Errorf("create context: %w", err)
 	}
 
-	defer src.CtxFree(ctx)
+	defer func(ctx *src.Context) { _ = src.CtxFree(ctx) }(ctx)
 
 	hash, err := wrapError2(src.CtxHashData(ctx, int(algo), data))
 	if err != nil {

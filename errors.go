@@ -1,12 +1,7 @@
 package eusign
 
 import (
-	"io"
 	"strconv"
-	"strings"
-
-	"golang.org/x/text/encoding/charmap"
-	"golang.org/x/text/transform"
 
 	src "github.com/dmytro-vovk/go-eusign/src"
 )
@@ -35,14 +30,4 @@ func wrapError2[T any](v T, err error) (T, error) {
 
 func (err *Error) Error() string {
 	return err.err.Message + " (" + strconv.Itoa(err.err.Code) + ")"
-}
-
-func cp1251ToUTF8(s string) string {
-	r := transform.NewReader(strings.NewReader(s), charmap.Windows1251.NewDecoder())
-	b, err := io.ReadAll(r)
-	if err != nil {
-		return s
-	}
-
-	return string(b)
 }
