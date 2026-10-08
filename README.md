@@ -14,10 +14,10 @@ The library is loaded at runtime with `dlopen`, so it must be on the loader path
 make test   # sets LD_LIBRARY_PATH / DYLD_LIBRARY_PATH for the current platform
 ```
 
-Tests that load keys need IIT test data in `data/` (gitignored): `CAs.Test.json`, `CACertificates.Test.All.p7b`, `Key-6.dat`.
+Tests that load keys need IIT test data in `data/` (gitignored): `CAs.Test.json`, `CACertificates.Test.All.p7b`.
 
 `testdata/iit/Key-6.dat` (password `12345677`) is IIT's public test key from the EUSignCP-EID-Usages samples;
-its certificates come from the IIT test CA over CMP, so `envelop_test.go` needs network.
+its certificates come from the IIT test CA over CMP, so `envelop_test.go` and `TestNew` need network.
 
 ## Network timeouts
 
