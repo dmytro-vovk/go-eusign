@@ -14,17 +14,33 @@ import (
 
 type Signer struct {
 	cas []CA
+
+	// Set by LoadPrivateKey; guarded by m.
+	ctx   *src.Context // owns pk
+	pk    *src.PrivateKeyContext
+	pkGen uint64 // library generation ctx and pk belong to
 }
 
 var (
 	m               sync.Mutex
-	defaultsApplied bool // guarded by m; reset whenever the library is (re)initialized
+	defaultsApplied bool   // guarded by m; reset whenever the library is (re)initialized
+	libGeneration   uint64 // guarded by m; bumped on every library load
 
 	// inFlight tracks CMP requests that may outlive the LoadPrivateKey call that
 	// started them. Add is called with m held; configure and finalize wait for
 	// them (also with m held) before touching process-global library state.
 	inFlight sync.WaitGroup
 )
+
+// ErrLibraryReloaded is returned when a handle outlived the library load that
+// created it (another Signer called Finalize).
+var ErrLibraryReloaded = errors.New("library was finalized since this handle was created")
+
+// libLoaded reports whether handles from library generation gen are usable.
+// Must be called with m held.
+func libLoaded(gen uint64) bool {
+	return src.IsInitialized() && gen == libGeneration
+}
 
 // NewSigner configures process-global library settings, so it holds m throughout.
 func NewSigner(casFile, caCertFile string, options ...Option) (*Signer, error) {
@@ -81,16 +97,14 @@ func initialize() error {
 	}
 
 	defaultsApplied = false // a fresh load re-reads osplm.ini
+	libGeneration++
 
 	return nil
 }
 
 // finalize unloads the library once background CMP requests (each bounded by
-// ConnectionsTimeout) have finished.
+// ConnectionsTimeout) have finished. Must be called with m held.
 func finalize() error {
-	m.Lock()
-	defer m.Unlock()
-
 	inFlight.Wait()
 
 	defaultsApplied = false
@@ -200,7 +214,14 @@ func loadCAs(fileName string) ([]CA, error) {
 	return cas, nil
 }
 
+// Finalize frees the loaded key and unloads the library for every Signer and
+// Encrypter; their handles then fail with ErrLibraryReloaded.
 func (s *Signer) Finalize() error {
+	m.Lock()
+	defer m.Unlock()
+
+	s.freePrivateKey()
+
 	return finalize()
 }
 
@@ -342,24 +363,5 @@ func (s *Signer) LoadPrivateKey(fileName, password, cn string) ([]byte, *src.Cer
 		}
 	}
 
-	// Save private key
-
-	ctx, err := wrapError2(src.CtxCreate())
-	if err != nil {
-		return nil, nil, fmt.Errorf("create context: %w", err)
-	}
-
-	{
-		pkCtx, _, err := src.CtxReadPrivateKeyBinary(ctx, keyData, password)
-		if err := wrapError(err); err != nil {
-			return nil, nil, fmt.Errorf("read private key binary: %w", err)
-		}
-
-		infoEx, cert, err := src.CtxGetOwnCertificate(pkCtx, src.CertKeyTypeDSTU4145, src.KeyUsageKeyAgreement)
-		if err := wrapError(err); err != nil {
-			return nil, nil, fmt.Errorf("get own certificate: %w", err)
-		}
-
-		return cert, infoEx, nil
-	}
+	return s.openPrivateKey(keyData, password)
 }
