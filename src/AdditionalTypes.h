@@ -119,6 +119,15 @@ typedef struct
 
 typedef struct
 {
+	int				bUseTSL;
+	int				bAutoDownloadTSL;
+	char			szTSLAddress[EU_TSL_ADDRESS_MAX_LENGTH];
+} EU_TSL_SETTINGS, *PEU_TSL_SETTINGS;
+
+//-----------------------------------------------------------------------------
+
+typedef struct
+{
 	int				bOffline;
 } EU_MODE_SETTINGS, *PEU_MODE_SETTINGS;
 

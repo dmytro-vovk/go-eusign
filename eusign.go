@@ -15,25 +15,18 @@ type Signer struct {
 	cas []CA
 }
 
-var m sync.Mutex
+var (
+	m               sync.Mutex
+	defaultsApplied bool // guarded by m; reset whenever the library is (re)initialized
+)
 
+// NewSigner configures process-global library settings, so it holds m throughout.
 func NewSigner(casFile, caCertFile string, options ...Option) (*Signer, error) {
 	m.Lock()
+	defer m.Unlock()
 
-	if !src.IsInitialized() {
-		if err := wrapError(src.Initialize()); err != nil {
-			return nil, fmt.Errorf("initializing: %w", err)
-		}
-	}
-
-	m.Unlock()
-
-	if err := applyDefaults(); err != nil {
-		return nil, fmt.Errorf("applying defaults: %w", err)
-	}
-
-	for _, fn := range options {
-		fn()
+	if err := configure(options); err != nil {
+		return nil, err
 	}
 
 	cas, err := loadCAs(casFile)
@@ -67,13 +60,56 @@ func NewSigner(casFile, caCertFile string, options ...Option) (*Signer, error) {
 	return &Signer{cas: cas}, err
 }
 
-func applyDefaults() error {
-	if need, err := wrapError2(src.DoesNeedSetSettings()); err != nil {
-		return fmt.Errorf("setting settings: %w", err)
-	} else if !need {
+// initialize loads the library if needed. Must be called with m held.
+func initialize() error {
+	if src.IsInitialized() {
 		return nil
 	}
 
+	if err := wrapError(src.Initialize()); err != nil {
+		return fmt.Errorf("initializing: %w", err)
+	}
+
+	defaultsApplied = false // a fresh load re-reads osplm.ini
+
+	return nil
+}
+
+// finalize unloads the library.
+func finalize() error {
+	m.Lock()
+	defer m.Unlock()
+
+	defaultsApplied = false
+
+	return wrapError(src.Finalize())
+}
+
+// configure initializes the library and applies defaults once per library
+// lifecycle, then the options. Must be called with m held.
+func configure(options []Option) error {
+	if err := initialize(); err != nil {
+		return err
+	}
+
+	if !defaultsApplied {
+		if err := applyDefaults(); err != nil {
+			return fmt.Errorf("applying defaults: %w", err)
+		}
+
+		defaultsApplied = true
+	}
+
+	for _, fn := range options {
+		fn()
+	}
+
+	return nil
+}
+
+// applyDefaults ignores DoesNeedSetSettings: IIT's bundled osplm.ini enables
+// offline mode and points the certificate store at /data/certificates.
+func applyDefaults() error {
 	if err := wrapError(src.SetRuntimeParameterInt(src.SaveSettingsParameter, src.SettingsIDNone)); err != nil {
 		return fmt.Errorf("set save settings parameter: %w", err)
 	}
@@ -147,7 +183,7 @@ func loadCAs(fileName string) ([]CA, error) {
 }
 
 func (s *Signer) Finalize() error {
-	return wrapError(src.Finalize())
+	return finalize()
 }
 
 func (s *Signer) Hash(data []byte, algo HashAlgo) ([]byte, error) {

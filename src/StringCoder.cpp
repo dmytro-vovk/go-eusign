@@ -155,4 +155,81 @@ int StringArrayToString(
 	return TRUE;
 }
 
+//--------------------------------------------------------------------------------
+
+int StringToStringArray(
+	const char*			pszSrc,
+	char***				pppszDst,
+	unsigned long*		pdwCount)
+{
+	unsigned long		dwCount = 0;
+	unsigned long		dwI;
+	const char*			pszCur  = pszSrc;
+
+	if (pdwCount)
+		*pdwCount = 0;
+	if (pppszDst)
+		*pppszDst = NULL;
+
+	if (pszSrc == NULL || pszSrc[0] == '\0')
+		return TRUE;
+
+	while (*pszCur != '\0')
+	{
+		++dwCount;
+		pszCur += strlen(pszCur) + 1;
+	}
+
+	char** ppszDst = new char*[dwCount];
+	if (ppszDst == NULL)
+		return FALSE;
+
+	memset(ppszDst, 0, sizeof(char*) * dwCount);
+
+	pszCur = pszSrc;
+	for (dwI = 0; dwI < dwCount; dwI++)
+	{
+		unsigned long dwLen = strlen(pszCur) + 1;
+		ppszDst[dwI] = new char[dwLen];
+		if (ppszDst[dwI] == NULL)
+		{
+			FreeStringArray(dwI, ppszDst);
+			return FALSE;
+		}
+
+		memcpy(ppszDst[dwI], pszCur, dwLen);
+		pszCur += dwLen;
+	}
+
+	if (pppszDst)
+		*pppszDst = ppszDst;
+	else
+		FreeStringArray(dwCount, ppszDst);
+
+	if (pdwCount)
+		*pdwCount = dwCount;
+
+	return TRUE;
+}
+
+//--------------------------------------------------------------------------------
+
+void FreeStringArray(
+	unsigned long		dwCount,
+	char**				ppszDst)
+{
+	unsigned long		dwI;
+
+	if (!ppszDst)
+		return;
+
+	for (dwI = 0; dwI < dwCount; dwI++)
+	{
+		if (ppszDst[dwI])
+			delete[] ppszDst[dwI];
+	}
+
+	delete[] ppszDst;
+}
+
 //================================================================================

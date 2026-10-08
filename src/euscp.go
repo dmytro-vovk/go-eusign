@@ -4,9 +4,11 @@ package euscp
 // #cgo CXXFLAGS: -g -Wall
 // #cgo linux CXXFLAGS: -DOS_NIX
 // #cgo darwin CXXFLAGS: -DOS_NIX
-// #cgo linux LDFLAGS: -ldl -L${SRCDIR}/lib/linux
+// #cgo linux,amd64 LDFLAGS: -L${SRCDIR}/lib/linux/64
+// #cgo linux,arm64 LDFLAGS: -L${SRCDIR}/lib/linux/arm
+// #cgo linux,386 LDFLAGS: -L${SRCDIR}/lib/linux/32
+// #cgo linux LDFLAGS: -ldl -losi
 // #cgo darwin LDFLAGS: -ldl -L${SRCDIR}/lib/darwin
-// #cgo linux LDFLAGS: -losi
 // #cgo darwin LDFLAGS: -Wl,-rpath,${SRCDIR}/lib/darwin -losi
 // #include <stdlib.h>
 // #include "Module.h"

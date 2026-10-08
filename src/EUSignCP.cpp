@@ -1673,6 +1673,90 @@ int EULoad()
 		(PEU_INITIALIZE_CERTIFICATE_STATUS_CACHE)
 		GetProcAddress(s_hLibrary,
 			"EUInitializeCertificateStatusCache");
+
+	s_Iface.ASiCCreateSignerBeginEx = (PEU_ASIC_CREATE_SIGNER_BEGIN_EX)
+		GetProcAddress(s_hLibrary, "EUASiCCreateSignerBeginEx");
+
+	s_Iface.CtxServerCreateCoupleSignStep2Ex = 
+		(PEU_CTX_SERVER_CREATE_COUPLE_SIGN_STEP2_EX)
+		GetProcAddress(s_hLibrary, "EUCtxServerCreateCoupleSignStep2Ex");
+
+	s_Iface.ClientsCtxGetLabeledData = (PEU_CLIENTS_CTX_GET_LABELED_DATA)
+		GetProcAddress(s_hLibrary, "EUClientsCtxGetLabeledData");
+	s_Iface.ClientsCtxSetLabeledData = (PEU_CLIENTS_CTX_SET_LABELED_DATA)
+		GetProcAddress(s_hLibrary, "EUClientsCtxSetLabeledData");
+	s_Iface.ClientsCtxRemoveLabeledData = (PEU_CLIENTS_CTX_REMOVE_LABELED_DATA)
+		GetProcAddress(s_hLibrary, "EUClientsCtxRemoveLabeledData");
+
+	s_Iface.XAdESCreateSignerBegin = (PEU_XADES_CREATE_SIGNER_BEGIN)
+		GetProcAddress(s_hLibrary, "EUXAdESCreateSignerBegin");
+	s_Iface.XAdESCreateSignerEnd = (PEU_XADES_CREATE_SIGNER_END)
+		GetProcAddress(s_hLibrary, "EUXAdESCreateSignerEnd");
+
+	s_Iface.ASiCRemoveSign = (PEU_ASIC_REMOVE_SIGN)
+		GetProcAddress(s_hLibrary, "EUASiCRemoveSign");
+
+	s_Iface.CtxEnvelopDataWithSettingsEx = 
+		(PEU_CTX_ENVELOP_DATA_WITH_SETTINGS_EX)
+		GetProcAddress(s_hLibrary, "EUCtxEnvelopDataWithSettingsEx");
+
+	s_Iface.AppendTransportHeaderEx = 
+		(PEU_APPEND_TRANSPORT_HEADER_EX)
+		GetProcAddress(s_hLibrary, "EUAppendTransportHeaderEx");
+	s_Iface.AppendFileTransportHeaderEx = 
+		(PEU_APPEND_FILE_TRANSPORT_HEADER_EX)
+		GetProcAddress(s_hLibrary, "EUAppendFileTransportHeaderEx");
+
+	s_Iface.DownloadFileViaHTTPEx = 
+		(PEU_DOWNLOAD_FILE_VIA_HTTP_EX)
+		GetProcAddress(s_hLibrary, "EUDownloadFileViaHTTPEx");
+
+	s_Iface.CtxDestroyNamedPrivateKey2 =
+		(PEU_CTX_DESTROY_NAMED_PRIVATE_KEY2)
+		GetProcAddress(s_hLibrary, "EUCtxDestroyNamedPrivateKey2");
+
+	s_Iface.MakeNewCertificateEx = (PEU_MAKE_NEW_CERTIFICATE_EX)
+		GetProcAddress(s_hLibrary, "EUMakeNewCertificateEx");
+	s_Iface.CtxMakeNewOwnCertificateEx = 
+		(PEU_CTX_MAKE_NEW_OWN_CERTIFICATE_EX)
+		GetProcAddress(s_hLibrary, "EUCtxMakeNewOwnCertificateEx");
+
+	s_Iface.GetRuntimeParameter = (PEU_GET_RUNTIME_PARAMETER)
+		GetProcAddress(s_hLibrary, "EUGetRuntimeParameter");
+
+	s_Iface.GetSignerIssuerAndSerial = (PEU_GET_SIGNER_ISSUER_AND_SERIAL)
+		GetProcAddress(s_hLibrary, "EUGetSignerIssuerAndSerial");
+
+	s_Iface.CtxCreateSignerBegin = (PEU_CTX_CREATE_SIGNER_BEGIN)
+		GetProcAddress(s_hLibrary, "EUCtxCreateSignerBegin");
+
+	s_Iface.CreateCRBegin = (PEU_CREATE_CR_BEGIN)
+		GetProcAddress(s_hLibrary, "EUCreateCRBegin");
+
+	s_Iface.ReadPrivateKeyCancel = (PEU_READ_PRIVATE_KEY_CANCEL)
+		GetProcAddress(s_hLibrary, "EUReadPrivateKeyCancel");
+
+	s_Iface.GetDataHashFromSignedDataEx = 
+		(PEU_GET_DATA_HASH_FROM_SIGNED_DATA_EX)
+		GetProcAddress(s_hLibrary, "EUGetDataHashFromSignedDataEx");
+	s_Iface.GetDataHashFromSignedFileEx = 
+		(PEU_GET_DATA_HASH_FROM_SIGNED_FILE_EX)
+		GetProcAddress(s_hLibrary, "EUGetDataHashFromSignedFileEx");
+
+	s_Iface.EnvelopDataToRecipientsWithSettings2 = 
+		(PEU_ENVELOP_DATA_TO_RECIPIENTS_WITH_SETTINGS_2)
+		GetProcAddress(s_hLibrary, "EUEnvelopDataToRecipientsWithSettings2");
+	s_Iface.CtxEnvelopDataWithSettings2 = 
+		(PEU_CTX_ENVELOP_DATA_WITH_SETTINGS_2)
+		GetProcAddress(s_hLibrary, "EUCtxEnvelopDataWithSettings2");
+
+	s_Iface.SServerClientGetAccessTokenAsync = 
+		(PEU_SSERVER_CLIENT_GET_ACCESS_TOKEN_ASYNC)
+		GetProcAddress(s_hLibrary, "EUSServerClientGetAccessTokenAsync");
+	s_Iface.SServerClientCheckGetAccessTokenStatus = 
+		(PEU_SSERVER_CLIENT_CHECK_GET_ACCESS_TOKEN_STATUS)
+		GetProcAddress(s_hLibrary, 
+		"EUSServerClientCheckGetAccessTokenStatus");
 #else // PC_STATIC_LIBS
 	s_Iface.Initialize = EUInitialize;
 	s_Iface.IsInitialized = EUIsInitialized;
@@ -2633,6 +2717,61 @@ int EULoad()
 
 	s_Iface.InitializeCertificateStatusCache =
 		EUInitializeCertificateStatusCache;
+
+	s_Iface.ASiCCreateSignerBeginEx = EUASiCCreateSignerBeginEx;
+
+	s_Iface.CtxServerCreateCoupleSignStep2Ex = 
+		EUCtxServerCreateCoupleSignStep2Ex;
+
+	s_Iface.ClientsCtxGetLabeledData =
+		EUClientsCtxGetLabeledData;
+	s_Iface.ClientsCtxSetLabeledData =
+		EUClientsCtxSetLabeledData;
+	s_Iface.ClientsCtxRemoveLabeledData =
+		EUClientsCtxRemoveLabeledData;
+
+	s_Iface.XAdESCreateSignerBegin = EUXAdESCreateSignerBegin;
+	s_Iface.XAdESCreateSignerEnd = EUXAdESCreateSignerEnd;
+
+	s_Iface.ASiCRemoveSign = EUASiCRemoveSign;
+
+	s_Iface.CtxEnvelopDataWithSettingsEx = 
+		EUCtxEnvelopDataWithSettingsEx;
+
+	s_Iface.AppendTransportHeaderEx = 
+		EUAppendTransportHeaderEx;
+	s_Iface.AppendFileTransportHeaderEx = 
+		EUAppendFileTransportHeaderEx;
+
+	s_Iface.DownloadFileViaHTTPEx = EUDownloadFileViaHTTPEx;
+
+	s_Iface.CtxDestroyNamedPrivateKey2 =
+		EUCtxDestroyNamedPrivateKey2;
+
+	s_Iface.MakeNewCertificateEx = EUMakeNewCertificateEx;
+	s_Iface.CtxMakeNewOwnCertificateEx = EUCtxMakeNewOwnCertificateEx;
+
+	s_Iface.GetRuntimeParameter = EUGetRuntimeParameter;
+
+	s_Iface.GetSignerIssuerAndSerial = EUGetSignerIssuerAndSerial;
+
+	s_Iface.CtxCreateSignerBegin = EUCtxCreateSignerBegin;
+
+	s_Iface.CreateCRBegin = EUCreateCRBegin;
+
+	s_Iface.ReadPrivateKeyCancel = EUReadPrivateKeyCancel;
+
+	s_Iface.GetDataHashFromSignedDataEx = EUGetDataHashFromSignedDataEx;
+	s_Iface.GetDataHashFromSignedFileEx = EUGetDataHashFromSignedFileEx;
+
+	s_Iface.EnvelopDataToRecipientsWithSettings2 = 
+		EUEnvelopDataToRecipientsWithSettings2;
+	s_Iface.CtxEnvelopDataWithSettings2 = EUCtxEnvelopDataWithSettings2;
+
+	s_Iface.SServerClientGetAccessTokenAsync = 
+		EUSServerClientGetAccessTokenAsync;
+	s_Iface.SServerClientCheckGetAccessTokenStatus = 
+		EUSServerClientCheckGetAccessTokenStatus;
 #endif // PC_STATIC_LIBS
 
 	for (dwI = 0; dwI < sizeof(EU_INTERFACE) /

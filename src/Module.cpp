@@ -25,6 +25,11 @@ const char*	EU_ERROR_NOT_INITIALIZED_EN_STRING				=
 
 static PEU_INTERFACE	s_pIface = NULL;
 
+static int				s_bForbidChdir = 0;
+static char				s_szSettingsPath[EU_PATH_MAX_LENGTH] = {0, };
+static unsigned long	s_dwRegRootKey = EU_REG_KEY_ROOT_PATH_DEFAULT;
+static char				s_szRegPath[EU_PATH_MAX_LENGTH] = {0, };
+
 //================================================================================
 
 unsigned long FreeMemory(
@@ -64,6 +69,17 @@ unsigned long CtxFreeMemory(
 		return EU_ERROR_NOT_INITIALIZED;
 
 	s_pIface->CtxFreeMemory(pvPrivateKeyContext, pbMemory);
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long FreeCStrings(
+	char*			*ppszStrings,
+	unsigned long	dwCount)
+{
+	FreeStringArray(dwCount, ppszStrings);
 
 	return EU_ERROR_NONE;
 }
@@ -169,6 +185,7 @@ unsigned long BASE64Encode(
 
 unsigned long Initialize()
 {
+	int				bUTC = 1;
 	unsigned long	dwError;
 
 	if (s_pIface != NULL)
@@ -187,6 +204,27 @@ unsigned long Initialize()
 
 	s_pIface->SetUIMode(FALSE);
 
+	dwError = s_pIface->SetRuntimeParameter(
+		(char *) EU_FORBID_CHDIR_PARAMETER, &s_bForbidChdir,
+		EU_FORBID_CHDIR_LENGTH);
+	if (dwError != EU_ERROR_NONE)
+	{
+		s_pIface = NULL;
+		EUUnload();
+
+		return dwError;
+	}
+
+	dwError = s_pIface->SetSettingsFilePathEx(
+		s_szSettingsPath, s_dwRegRootKey, s_szRegPath);
+	if (dwError != EU_ERROR_NONE)
+	{
+		s_pIface = NULL;
+		EUUnload();
+
+		return dwError;
+	}
+
 	dwError = s_pIface->Initialize();
 	if (dwError != EU_ERROR_NONE)
 	{
@@ -197,6 +235,18 @@ unsigned long Initialize()
 	}
 
 	s_pIface->SetUIMode(FALSE);
+
+	dwError = s_pIface->SetRuntimeParameter(
+		(char *) EU_USE_UTC_TIME_PARAMETER, &bUTC, 
+		EU_USE_UTC_TIME_PARAMETER_LENGTH);
+	if (dwError != EU_ERROR_NONE)
+	{
+		s_pIface->Finalize();
+		s_pIface = NULL;
+		EUUnload();
+
+		return dwError;
+	}
 
 	return EU_ERROR_NONE;
 }
@@ -239,6 +289,95 @@ unsigned long DoesNeedSetSettings(
 		return EU_ERROR_NOT_INITIALIZED;
 
 	*pbDoesNeedSetSettings = s_pIface->DoesNeedSetSettings();
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long SetSettingsFilePathEx(
+	char*			pszSettingsPath,
+	unsigned long	dwRootKey,
+	char*			pszRegPath)
+{
+	unsigned long	dwError;
+
+	if (!ConvertString(
+			CP_UTF8, pszSettingsPath,
+			CP_ACP, s_szSettingsPath,
+			sizeof(s_szSettingsPath)) ||
+		!ConvertString(
+			CP_UTF8, pszRegPath,
+			CP_ACP, s_szRegPath,
+			sizeof(s_szRegPath)))
+	{
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_dwRegRootKey = dwRootKey;
+
+	if (s_pIface != NULL)
+	{
+		dwError = s_pIface->SetSettingsFilePathEx(
+			s_szSettingsPath, dwRootKey, s_szRegPath);
+		if (dwError != EU_ERROR_NONE)
+			return dwError;
+	}
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long GetModeSettings(
+	char*			**pppszSettings,
+	unsigned long	*pdwSettings)
+{
+	EU_MODE_SETTINGS		Settings;
+	STRUCT_FIELDS			InfoFields;
+	unsigned long			dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->GetModeSettings(
+		&Settings.bOffline);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!Encode(&Settings, &InfoFields))
+		return EU_ERROR_MEMORY_ALLOCATION;
+
+	*pppszSettings = InfoFields.ppszFields;
+	*pdwSettings = InfoFields.nCount;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long SetModeSettings(
+	char			**ppszSettings,
+	unsigned long	dwSettings)
+{
+	EU_MODE_SETTINGS		Settings;
+	STRUCT_FIELDS			InfoFields;
+	unsigned long			dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	InfoFields.ppszFields = ppszSettings;
+	InfoFields.nCount = dwSettings;
+	InfoFields.nIndex = 0;
+
+	if (!Decode(&InfoFields, &Settings))
+		return EU_ERROR_MEMORY_ALLOCATION;
+
+	dwError = s_pIface->SetModeSettings(
+		Settings.bOffline);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
 
 	return EU_ERROR_NONE;
 }
@@ -871,19 +1010,21 @@ unsigned long SetLogSettings(
 
 //--------------------------------------------------------------------------------
 
-unsigned long GetModeSettings(
+unsigned long GetTSLSettings(
 	char*			**pppszSettings,
 	unsigned long	*pdwSettings)
 {
-	EU_MODE_SETTINGS		Settings;
-	STRUCT_FIELDS			InfoFields;
-	unsigned long			dwError;
+	EU_TSL_SETTINGS	Settings;
+	STRUCT_FIELDS	InfoFields;
+	unsigned long	dwError;
 
 	if (s_pIface == NULL)
 		return EU_ERROR_NOT_INITIALIZED;
 
-	dwError = s_pIface->GetModeSettings(
-		&Settings.bOffline);
+	dwError = s_pIface->GetTSLSettings(
+		&Settings.bUseTSL,
+		&Settings.bAutoDownloadTSL,
+		Settings.szTSLAddress);
 	if (dwError != EU_ERROR_NONE)
 		return dwError;
 
@@ -891,20 +1032,20 @@ unsigned long GetModeSettings(
 		return EU_ERROR_MEMORY_ALLOCATION;
 
 	*pppszSettings = InfoFields.ppszFields;
-	*pdwSettings = InfoFields.nCount;
+	*pdwSettings    = InfoFields.nCount;
 
 	return EU_ERROR_NONE;
 }
 
 //--------------------------------------------------------------------------------
 
-unsigned long SetModeSettings(
+unsigned long SetTSLSettings(
 	char			**ppszSettings,
 	unsigned long	dwSettings)
 {
-	EU_MODE_SETTINGS		Settings;
-	STRUCT_FIELDS			InfoFields;
-	unsigned long			dwError;
+	EU_TSL_SETTINGS	Settings;
+	STRUCT_FIELDS	InfoFields;
+	unsigned long	dwError;
 
 	if (s_pIface == NULL)
 		return EU_ERROR_NOT_INITIALIZED;
@@ -916,8 +1057,10 @@ unsigned long SetModeSettings(
 	if (!Decode(&InfoFields, &Settings))
 		return EU_ERROR_MEMORY_ALLOCATION;
 
-	dwError = s_pIface->SetModeSettings(
-		Settings.bOffline);
+	dwError = s_pIface->SetTSLSettings(
+		Settings.bUseTSL,
+		Settings.bAutoDownloadTSL,
+		Settings.szTSLAddress);
 	if (dwError != EU_ERROR_NONE)
 		return dwError;
 
@@ -931,10 +1074,23 @@ unsigned long SetRuntimeParameter(
 	void*			pvParameterValue,
 	unsigned long	dwParameterValueLength)
 {
+	int				bParameterValueSet = 0;
 	unsigned long	dwError;
 
+	if ((dwParameterValueLength == 
+			EU_FORBID_CHDIR_LENGTH) && 
+		!strcmp(pszParameterName,
+			EU_FORBID_CHDIR_PARAMETER))
+	{
+		s_bForbidChdir = *((int *) pvParameterValue);
+		bParameterValueSet = 1;
+	}
+
 	if (s_pIface == NULL)
-		return EU_ERROR_NOT_INITIALIZED;
+	{
+		return bParameterValueSet ? 
+			EU_ERROR_NONE : EU_ERROR_NOT_INITIALIZED;
+	}
 
 	dwError = s_pIface->SetRuntimeParameter(
 		pszParameterName, pvParameterValue,
@@ -976,6 +1132,39 @@ unsigned long SaveCertificate(
 	dwError = s_pIface->SaveCertificate(
 		pbCertificate,
 		dwCertificateLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long DeleteCertificate(
+	char*			pszIssuer,
+	char*			pszSerial)
+{
+	unsigned long	dwError;
+	char			szIssuer[EU_ISSUER_MAX_LENGTH];
+	char			szSerial[EU_SERIAL_MAX_LENGTH];
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	if (!ConvertString(
+			CP_UTF8, pszIssuer,
+			CP_ACP, szIssuer,
+			EU_ISSUER_MAX_LENGTH) ||
+		!ConvertString(
+			CP_UTF8, pszSerial,
+			CP_ACP, szSerial,
+			EU_SERIAL_MAX_LENGTH))
+	{
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	dwError = s_pIface->DeleteCertificate(
+		szIssuer, szSerial);
 	if (dwError != EU_ERROR_NONE)
 		return dwError;
 
@@ -1028,6 +1217,104 @@ unsigned long SaveCertificatesEx(
 
 //--------------------------------------------------------------------------------
 
+unsigned long SaveTSL(
+	unsigned char*	pbTSL,
+	unsigned long	dwTSLLength)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->SaveTSL(
+		pbTSL, dwTSLLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long EnumCertificatesEx(
+	unsigned long	dwSubjectType,
+	unsigned long	dwSubjectSubType,
+	unsigned long	dwCertKeyType,
+	unsigned long	dwKeyUsage,
+	unsigned long	dwIndex,
+	char*			**pppszInfo,
+	unsigned long	*pdwInfo,
+	unsigned char*	*ppbCertificate,
+	unsigned long*	pdwCertificateLength)
+{
+	PEU_CERT_INFO_EX	pInfo;
+	STRUCT_FIELDS		InfoFields;
+	unsigned long		dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->EnumCertificatesEx(
+		dwSubjectType, dwSubjectSubType, dwCertKeyType,
+		dwKeyUsage, dwIndex, &pInfo, ppbCertificate,
+		pdwCertificateLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!Encode(pInfo, &InfoFields))
+	{
+		s_pIface->FreeMemory(*ppbCertificate);
+		s_pIface->FreeCertificateInfoEx(pInfo);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->FreeCertificateInfoEx(pInfo);
+
+	*pppszInfo = InfoFields.ppszFields;
+	*pdwInfo = InfoFields.nCount;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long GetCertificate(
+	char*			pszIssuer,
+	char*			pszSerial,
+	unsigned char*	*ppbCertificate,
+	unsigned long*	pdwCertificateLength)
+{
+	unsigned long	dwError;
+	char			szIssuer[EU_ISSUER_MAX_LENGTH];
+	char			szSerial[EU_SERIAL_MAX_LENGTH];
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	if (!ConvertString(
+			CP_UTF8, pszIssuer,
+			CP_ACP, szIssuer,
+			EU_ISSUER_MAX_LENGTH) ||
+		!ConvertString(
+			CP_UTF8, pszSerial,
+			CP_ACP, szSerial,
+			EU_SERIAL_MAX_LENGTH))
+	{
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	dwError = s_pIface->GetCertificate(
+		szIssuer, szSerial, NULL,
+		ppbCertificate, pdwCertificateLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
 unsigned long ParseCertificateEx(
 	unsigned char*	pbCertificate,
 	unsigned long	dwCertificateLength,
@@ -1035,7 +1322,7 @@ unsigned long ParseCertificateEx(
 	unsigned long	*pdwInfo)
 {
 	PEU_CERT_INFO_EX	pInfo;
-	STRUCT_FIELDS		InfoFields;	
+	STRUCT_FIELDS		InfoFields;
 	unsigned long		dwError;
 
 	if (s_pIface == NULL)
@@ -1170,6 +1457,8 @@ unsigned long EnumKeyMediaDevices(
 
 	return EU_ERROR_NONE;
 }
+
+//--------------------------------------------------------------------------------
 
 unsigned long GeneratePrivateKey2(
 	char			**ppszKeyMedia,
@@ -1682,6 +1971,7 @@ unsigned long EnumJKSPrivateKeys(
 			CP_UTF8, ppszKeyAlias))
 	{
 		s_pIface->FreeMemory((unsigned char*) pszKeyAlias);
+
 		return EU_ERROR_MEMORY_ALLOCATION;
 	}
 
@@ -2240,6 +2530,62 @@ unsigned long CtxSignData(
 
 //--------------------------------------------------------------------------------
 
+unsigned long CtxAppendSignHashValue(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwSignAlgo,
+	unsigned char*	pbHash,
+	unsigned long	dwHashLength,
+	unsigned char*	pbPreviousSign,
+	unsigned long	dwPreviousSignLength,
+	int				bAppendCert,
+	unsigned char*	*ppbSign,
+	unsigned long	*pdwSignLength)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->CtxAppendSignHashValue(
+		pvPrivateKeyContext, dwSignAlgo, pbHash,
+		dwHashLength, pbPreviousSign, dwPreviousSignLength,
+		bAppendCert, ppbSign, pdwSignLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError; 
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long CtxAppendSign(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwSignAlgo,
+	unsigned char*	pbData,
+	unsigned long	dwDataLength,
+	unsigned char*	pbPreviousSign,
+	unsigned long	dwPreviousSignLength,
+	int				bAppendCert,
+	unsigned char*	*ppbSign,
+	unsigned long	*pdwSignLength)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->CtxAppendSign(
+		pvPrivateKeyContext, dwSignAlgo,
+		pbData, dwDataLength, pbPreviousSign, dwPreviousSignLength,
+		bAppendCert, ppbSign, pdwSignLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
 unsigned long CtxCreateSignerEx(
 	void*			pvPrivateKeyContext,
 	unsigned long	dwSignAlgo,
@@ -2356,6 +2702,38 @@ unsigned long CtxEnvelopData(
 		bAppendCert, pbData, dwDataLength,
 		ppbEnvelopData, pdwEnvelopedDataLength);
 	if (dwError != EU_ERROR_NONE) 
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long CtxEnvelopDataRSA(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwRecipientCerts,
+	unsigned char*	*ppbRecipientCerts,
+	unsigned long*	pdwRecipentCertsLength,
+	unsigned long	dwContentEncAlgoType,
+	int				bSignData,
+	int				bAppendCert,
+	unsigned char*	pbData,
+	unsigned long	dwDataLength,
+	unsigned char*	*ppbEnvelopedData,
+	unsigned long*	pdwEnvelopedDataLength)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->CtxEnvelopDataRSA(
+		pvPrivateKeyContext, dwRecipientCerts,
+		ppbRecipientCerts, pdwRecipentCertsLength,
+		dwContentEncAlgoType, bSignData,
+		bAppendCert, pbData, dwDataLength,
+		ppbEnvelopedData, pdwEnvelopedDataLength);
+	if (dwError != EU_ERROR_NONE)
 		return dwError;
 
 	return EU_ERROR_NONE;
@@ -2601,6 +2979,967 @@ unsigned long CtxFree(
 		return EU_ERROR_NOT_INITIALIZED;
 
 	s_pIface->CtxFree(pvContext);
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long XAdESGetType(
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	unsigned long*	pdwXAdESType)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->XAdESGetType(
+		pbXAdESData, dwXAdESDataLength, pdwXAdESType);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long XAdESGetSignsCount(
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	unsigned long*	pdwCount)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->XAdESGetSignsCount(
+		pbXAdESData, dwXAdESDataLength, pdwCount);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long XAdESGetSignLevel(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	unsigned long*	pdwSignLevel)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->XAdESGetSignLevel(
+		dwSignIndex, pbXAdESData, dwXAdESDataLength, pdwSignLevel);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long XAdESGetSignerInfo(
+	unsigned long		dwSignIndex,
+	unsigned char*		pbXAdESData,
+	unsigned long		dwXAdESDataLength,
+	char*				**pppszInfo,
+	unsigned long		*pdwInfo,
+	unsigned char*		*ppbCertificate,
+	unsigned long*		pdwCertifiacateLength)
+{
+	PEU_CERT_INFO_EX	pInfo;
+	STRUCT_FIELDS		InfoFields;
+	unsigned long		dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->XAdESGetSignerInfo(
+		dwSignIndex, pbXAdESData, dwXAdESDataLength,
+		&pInfo, ppbCertificate, pdwCertifiacateLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!Encode(pInfo, &InfoFields))
+	{
+		s_pIface->FreeMemory(*ppbCertificate);
+		s_pIface->FreeCertificateInfoEx(pInfo);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->FreeCertificateInfoEx(pInfo);
+
+	*pppszInfo = InfoFields.ppszFields;
+	*pdwInfo = InfoFields.nCount;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long CtxXAdESGetSignerInfo(
+	void*				pvContext,
+	unsigned long		dwSignIndex,
+	unsigned char*		pbXAdESData,
+	unsigned long		dwXAdESDataLength,
+	char*				**pppszInfo,
+	unsigned long		*pdwInfo,
+	unsigned char*		*ppbCertificate,
+	unsigned long		*pdwCertifiacateLength)
+{
+	PEU_CERT_INFO_EX	pInfo;
+	STRUCT_FIELDS		InfoFields;
+	unsigned long		dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->CtxXAdESGetSignerInfo(
+		pvContext, dwSignIndex, pbXAdESData, dwXAdESDataLength,
+		&pInfo, ppbCertificate, pdwCertifiacateLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!Encode(pInfo, &InfoFields))
+	{
+		s_pIface->CtxFreeMemory(pvContext, *ppbCertificate);
+		s_pIface->CtxFreeCertificateInfoEx(pvContext, pInfo);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->CtxFreeCertificateInfoEx(pvContext, pInfo);
+
+	*pppszInfo = InfoFields.ppszFields;
+	*pdwInfo = InfoFields.nCount;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long XAdESGetSignTimeInfo(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	char*			**pppszTimeInfo,
+	unsigned long	*pdwTimeInfo)
+{
+	PEU_TIME_INFO	pTimeInfo;
+	STRUCT_FIELDS	InfoFields;
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->XAdESGetSignTimeInfo(
+		dwSignIndex, pbXAdESData, dwXAdESDataLength, &pTimeInfo);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!Encode(pTimeInfo, &InfoFields))
+	{
+		s_pIface->FreeTimeInfo(pTimeInfo);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->FreeTimeInfo(pTimeInfo);
+
+	*pppszTimeInfo = InfoFields.ppszFields;
+	*pdwTimeInfo = InfoFields.nCount;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long XAdESGetSignReferences(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	char*			**pppszReferences,
+	unsigned long	*pdwReferencesCount)
+{
+	char*			pszReferences;
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->XAdESGetSignReferences(
+		dwSignIndex, pbXAdESData, dwXAdESDataLength, &pszReferences);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!StringToStringArray(pszReferences,
+			pppszReferences, pdwReferencesCount))
+	{
+		s_pIface->FreeMemory((unsigned char*) pszReferences);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->FreeMemory((unsigned char*) pszReferences);
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long XAdESGetReference(
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	char*			pszReference,
+	unsigned char*	*ppbReference,
+	unsigned long*	pdwReferenceLength)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->XAdESGetReference(
+		pbXAdESData, dwXAdESDataLength, pszReference,
+		ppbReference, pdwReferenceLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//-----------------------------------------------------------------------------
+
+unsigned long CtxXAdESSignData(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwSignAlgo,
+	unsigned long	dwXAdESType,
+	unsigned long	dwSignLevel,
+	char*			*ppszReferences,
+	unsigned long	dwReferencesCount,
+	unsigned char*	*ppbReferences,
+	unsigned long*	pdwReferencesLength,
+	unsigned char*	*ppbXAdESData,
+	unsigned long*	pdwXAdESDataLength)
+{
+	char*			pszReferences;
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	if (!StringArrayToString(
+			(const char**) ppszReferences, dwReferencesCount,
+			&pszReferences))
+	{
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	dwError = s_pIface->CtxXAdESSignData(
+		pvPrivateKeyContext,
+		dwSignAlgo, dwXAdESType, dwSignLevel,
+		pszReferences, ppbReferences, pdwReferencesLength,
+		ppbXAdESData, pdwXAdESDataLength);
+	if (dwError != EU_ERROR_NONE)
+	{
+		delete[] pszReferences;
+
+		return dwError;
+	}
+
+	delete[] pszReferences;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long XAdESVerifyData(
+	char*			*ppszReferences,
+	unsigned long	dwReferencesCount,
+	unsigned char*	*ppbReferences,
+	unsigned long*	pdwReferencesLength,
+	unsigned long	dwSignIndex,
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	char*			**pppszSignInfo,
+	unsigned long	*pdwSignInfo)
+{
+	char*			pszReferences;
+	EU_SIGN_INFO	Info;
+	STRUCT_FIELDS	InfoFields;
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	if (!StringArrayToString(
+			(const char**) ppszReferences, dwReferencesCount,
+			&pszReferences))
+	{
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	dwError = s_pIface->XAdESVerifyData(
+		ppszReferences == NULL ? NULL : pszReferences,
+		ppbReferences, pdwReferencesLength,
+		dwSignIndex, pbXAdESData, dwXAdESDataLength, &Info);
+	if (dwError != EU_ERROR_NONE)
+	{
+		delete[] pszReferences;
+
+		return dwError;
+	}
+
+	if (!Encode(&Info, &InfoFields))
+	{
+		delete[] pszReferences;
+
+		s_pIface->FreeSignInfo(&Info);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	delete[] pszReferences;
+
+	s_pIface->FreeSignInfo(&Info);
+
+	*pppszSignInfo = InfoFields.ppszFields;
+	*pdwSignInfo = InfoFields.nCount;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long PDFGetSignType(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbSignedPDFData,
+	unsigned long	dwSignedPDFDataLength,
+	unsigned long*	pdwType)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->PDFGetSignType(
+		dwSignIndex, pbSignedPDFData,
+		dwSignedPDFDataLength, pdwType);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long PDFGetSignsCount(
+	unsigned char*	pbSignedPDFData,
+	unsigned long	dwSignedPDFDataLength,
+	unsigned long*	pdwSignsCount)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->PDFGetSignsCount(
+		pbSignedPDFData, dwSignedPDFDataLength, pdwSignsCount);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long PDFGetSignerInfo(
+	unsigned long		dwSignIndex,
+	unsigned char*		pbSignedPDFData,
+	unsigned long		dwSignedPDFDataLength,
+	char*				**pppszInfo,
+	unsigned long		*pdwInfo,
+	unsigned char*		*ppbCertificate,
+	unsigned long*		pdwCertifiacateLength)
+{
+	PEU_CERT_INFO_EX	pInfo;
+	STRUCT_FIELDS		InfoFields;
+	unsigned long		dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->PDFGetSignerInfo(
+		dwSignIndex, pbSignedPDFData, dwSignedPDFDataLength,
+		&pInfo, ppbCertificate, pdwCertifiacateLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!Encode(pInfo, &InfoFields))
+	{
+		s_pIface->FreeMemory(*ppbCertificate);
+		s_pIface->FreeCertificateInfoEx(pInfo);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->FreeCertificateInfoEx(pInfo);
+
+	*pppszInfo = InfoFields.ppszFields;
+	*pdwInfo = InfoFields.nCount;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long CtxPDFGetSignerInfo(
+	void*				pvContext,
+	unsigned long		dwSignIndex,
+	unsigned char*		pbSignedPDFData,
+	unsigned long		dwSignedPDFDataLength,
+	char*				**pppszInfo,
+	unsigned long		*pdwInfo,
+	unsigned char*		*ppbCertificate,
+	unsigned long		*pdwCertifiacateLength)
+{
+	PEU_CERT_INFO_EX	pInfo;
+	STRUCT_FIELDS		InfoFields;
+	unsigned long		dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->CtxPDFGetSignerInfo(
+		pvContext, dwSignIndex,
+		pbSignedPDFData, dwSignedPDFDataLength,
+		&pInfo, ppbCertificate, pdwCertifiacateLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!Encode(pInfo, &InfoFields))
+	{
+		s_pIface->CtxFreeMemory(pvContext, *ppbCertificate);
+		s_pIface->CtxFreeCertificateInfoEx(pvContext, pInfo);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->CtxFreeCertificateInfoEx(pvContext, pInfo);
+
+	*pppszInfo = InfoFields.ppszFields;
+	*pdwInfo = InfoFields.nCount;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long PDFGetSignTimeInfo(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbSignedPDFData,
+	unsigned long	dwSignedPDFDataLength,
+	char*			**pppszInfo,
+	unsigned long	*pdwInfo)
+{
+	PEU_TIME_INFO	pTimeInfo;
+	STRUCT_FIELDS	InfoFields;
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->PDFGetSignTimeInfo(
+		dwSignIndex, pbSignedPDFData,
+		dwSignedPDFDataLength, &pTimeInfo);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!Encode(pTimeInfo, &InfoFields))
+	{
+		s_pIface->FreeTimeInfo(pTimeInfo);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->FreeTimeInfo(pTimeInfo);
+
+	*pppszInfo = InfoFields.ppszFields;
+	*pdwInfo = InfoFields.nCount;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long CtxPDFSignData(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwSignAlgo,
+	unsigned char*	pbPDFData,
+	unsigned long	dwPDFDataLength,
+	unsigned long	dwSignType,
+	unsigned char*	*ppbSignedPDFData,
+	unsigned long	*pdwSignedPDFDataLength)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->CtxPDFSignData(
+		pvPrivateKeyContext, dwSignAlgo,
+		pbPDFData, dwPDFDataLength, dwSignType,
+		ppbSignedPDFData, pdwSignedPDFDataLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long PDFVerifyData(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbSignedPDFData,
+	unsigned long	dwPDFDataLength,
+	char*			**pppszSignInfo,
+	unsigned long	*pdwSignInfo)
+{
+	EU_SIGN_INFO	Info;
+	STRUCT_FIELDS	InfoFields;
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->PDFVerifyData(
+		dwSignIndex, pbSignedPDFData,
+		dwPDFDataLength, &Info);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!Encode(&Info, &InfoFields))
+	{
+		s_pIface->FreeSignInfo(&Info);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->FreeSignInfo(&Info);
+
+	*pppszSignInfo = InfoFields.ppszFields;
+	*pdwSignInfo = InfoFields.nCount;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long ASiCGetASiCType(
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	unsigned long*	pdwASiCType)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->ASiCGetASiCType(
+		pbASiCData, dwASiCDataLength, pdwASiCType);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long ASiCGetSignType(
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	unsigned long*	pdwSignType)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->ASiCGetSignType(
+		pbASiCData, dwASiCDataLength, pdwSignType);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long ASiCGetSignLevel(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	unsigned long*	pdwSignLevel)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->ASiCGetSignLevel(
+		dwSignIndex, pbASiCData,
+		dwASiCDataLength, pdwSignLevel);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long ASiCGetSignsCount(
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	unsigned long*	pdwSignsCount)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->ASiCGetSignsCount(
+		pbASiCData, dwASiCDataLength, pdwSignsCount);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long ASiCGetSignerInfo(
+	unsigned long		dwSignIndex,
+	unsigned char*		pbASiCData,
+	unsigned long		dwASiCDataLength,
+	char*				**pppszCertInfo,
+	unsigned long		*pdwCertInfo,
+	unsigned char*		*ppbCertificate,
+	unsigned long		*pdwCertifiacateLength)
+{
+	PEU_CERT_INFO_EX	pInfo;
+	STRUCT_FIELDS		InfoFields;
+	unsigned long		dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->ASiCGetSignerInfo(
+		dwSignIndex, pbASiCData, dwASiCDataLength,
+		&pInfo, ppbCertificate, pdwCertifiacateLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!Encode(pInfo, &InfoFields))
+	{
+		s_pIface->FreeMemory(*ppbCertificate);
+		s_pIface->FreeCertificateInfoEx(pInfo);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->FreeCertificateInfoEx(pInfo);
+
+	*pppszCertInfo = InfoFields.ppszFields;
+	*pdwCertInfo = InfoFields.nCount;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long CtxASiCGetSignerInfo(
+	void*				pvContext,
+	unsigned long		dwSignIndex,
+	unsigned char*		pbASiCData,
+	unsigned long		dwASiCDataLength,
+	char*				**pppszCertInfo,
+	unsigned long		*pdwCertInfo,
+	unsigned char*		*ppbCertificate,
+	unsigned long		*pdwCertifiacateLength)
+{
+	PEU_CERT_INFO_EX	pInfo;
+	STRUCT_FIELDS		InfoFields;
+	unsigned long		dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->CtxASiCGetSignerInfo(
+		pvContext, dwSignIndex, pbASiCData, dwASiCDataLength,
+		&pInfo, ppbCertificate, pdwCertifiacateLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!Encode(pInfo, &InfoFields))
+	{
+		s_pIface->CtxFreeMemory(pvContext, *ppbCertificate);
+		s_pIface->CtxFreeCertificateInfoEx(pvContext, pInfo);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->CtxFreeCertificateInfoEx(pvContext, pInfo);
+
+	*pppszCertInfo = InfoFields.ppszFields;
+	*pdwCertInfo = InfoFields.nCount;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long ASiCGetSignTimeInfo(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	char*			**pppszInfo,
+	unsigned long	*pdwInfo)
+{
+	PEU_TIME_INFO	pTimeInfo;
+	STRUCT_FIELDS	InfoFields;
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->ASiCGetSignTimeInfo(
+		dwSignIndex, pbASiCData, dwASiCDataLength, &pTimeInfo);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!Encode(pTimeInfo, &InfoFields))
+	{
+		s_pIface->FreeTimeInfo(pTimeInfo);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->FreeTimeInfo(pTimeInfo);
+
+	*pppszInfo = InfoFields.ppszFields;
+	*pdwInfo = InfoFields.nCount;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long ASiCGetSignReferences(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	char*			**pppszReferences,
+	unsigned long	*pdwReferencesCount)
+{
+	char*			pszReferences;
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->ASiCGetSignReferences(
+		dwSignIndex, pbASiCData,
+		dwASiCDataLength, &pszReferences);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!StringToStringArray(pszReferences,
+			pppszReferences, pdwReferencesCount))
+	{
+		s_pIface->FreeMemory((unsigned char*) pszReferences);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->FreeMemory((unsigned char*) pszReferences);
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long ASiCGetReference(
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	char*			pszReference,
+	unsigned char*	*ppbReference,
+	unsigned long*	pdwReferenceLength)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->ASiCGetReference(
+		pbASiCData, dwASiCDataLength,
+		pszReference, ppbReference, pdwReferenceLength);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long ASiCIsAllContentCovered(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	int*			pbCovered)
+{
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->ASiCIsAllContentCovered(
+		dwSignIndex, pbASiCData, dwASiCDataLength, pbCovered);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long CtxASiCSignData(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwSignAlgo,
+	unsigned long	dwASiCType,
+	unsigned long	dwSignType,
+	unsigned long	dwSignLevel,
+	char*			*ppszReferences,
+	unsigned long	dwReferencesCount,
+	unsigned char*	*ppbReferencesData,
+	unsigned long*	pdwReferencesDataLength,
+	unsigned char*	*ppbASiCData,
+	unsigned long	*pdwASiCDataLength)
+{
+	char*			pszReferences;
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	if (!StringArrayToString(
+			(const char**) ppszReferences, dwReferencesCount,
+			&pszReferences))
+	{
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	dwError = s_pIface->CtxASiCSignData(
+		pvPrivateKeyContext, dwSignAlgo,
+		dwASiCType, dwSignType, dwSignLevel, 
+		pszReferences, ppbReferencesData,
+		pdwReferencesDataLength, 
+		ppbASiCData, pdwASiCDataLength);
+	if (dwError != EU_ERROR_NONE)
+	{
+		delete[] pszReferences;
+
+		return dwError;
+	}
+
+	delete[] pszReferences;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long CtxASiCAppendSign(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwSignAlgo,
+	unsigned long	dwSignLevel,
+	char*			*ppszReferences,
+	unsigned long	dwReferencesCount,
+	unsigned char*	pbPreviousASiCData,
+	unsigned long	dwPreviousASiCDataLength,
+	unsigned char*	*ppbASiCData,
+	unsigned long	*pdwASiCDataLength)
+{
+	char*			pszReferences;
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	if (!StringArrayToString(
+			(const char**) ppszReferences, dwReferencesCount,
+			&pszReferences))
+	{
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	dwError = s_pIface->CtxASiCAppendSign(
+		pvPrivateKeyContext, dwSignAlgo, dwSignLevel, 
+		pszReferences, pbPreviousASiCData, dwPreviousASiCDataLength,
+		ppbASiCData, pdwASiCDataLength);
+	if (dwError != EU_ERROR_NONE)
+	{
+		delete[] pszReferences;
+
+		return dwError;
+	}
+
+	delete[] pszReferences;
+
+	return EU_ERROR_NONE;
+}
+
+//--------------------------------------------------------------------------------
+
+unsigned long ASiCVerifyData(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	char*			**pppszSignInfo,
+	unsigned long	*pdwSignInfo)
+{
+	EU_SIGN_INFO	Info;
+	STRUCT_FIELDS	InfoFields;
+	unsigned long	dwError;
+
+	if (s_pIface == NULL)
+		return EU_ERROR_NOT_INITIALIZED;
+
+	dwError = s_pIface->ASiCVerifyData(
+		dwSignIndex, pbASiCData, dwASiCDataLength, &Info);
+	if (dwError != EU_ERROR_NONE)
+		return dwError;
+
+	if (!Encode(&Info, &InfoFields))
+	{
+		s_pIface->FreeSignInfo(&Info);
+
+		return EU_ERROR_MEMORY_ALLOCATION;
+	}
+
+	s_pIface->FreeSignInfo(&Info);
+
+	*pppszSignInfo = InfoFields.ppszFields;
+	*pdwSignInfo = InfoFields.nCount;
 
 	return EU_ERROR_NONE;
 }

@@ -23,6 +23,7 @@
 #define OCSP_ACCESS_INFO_MODE_SETTINGS_FIELDS_COUNT	1
 #define OCSP_ACCESS_INFO_SETTINGS_FIELDS_COUNT		3
 #define LOG_SETTINGS_FIELDS_COUNT					5
+#define TSL_SETTINGS_FIELDS_COUNT					3
 #define MODE_SETTINGS_FIELDS_COUNT					1
 
 #define MAX_INT_STR_LENGTH							10
@@ -1033,6 +1034,48 @@ int Decode(
 		!Get(pFields, pSettings->szReportAgentAddress, sizeof(pSettings->szReportAgentAddress)) ||
 		!Get(pFields, pSettings->szReportAgentPort, sizeof(pSettings->szReportAgentPort)) ||
 		!Get(pFields, &pSettings->bOnlyErrors))
+	{
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+//--------------------------------------------------------------------------------
+
+int Encode(
+	PEU_TSL_SETTINGS		pSettings,
+	PSTRUCT_FIELDS			pFields)
+{
+	if (!Alloc(TSL_SETTINGS_FIELDS_COUNT, pFields))
+		return FALSE;
+
+	if (!Add(pSettings->bUseTSL, pFields) ||
+		!Add(pSettings->bAutoDownloadTSL, pFields) ||
+		!Add(pSettings->szTSLAddress, pFields))
+	{
+		Free(pFields);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+//--------------------------------------------------------------------------------
+
+int Decode(
+	PSTRUCT_FIELDS			pFields,
+	PEU_TSL_SETTINGS		pSettings)
+{
+	if (!pFields)
+		return FALSE;
+
+	pFields->nIndex = 0;
+
+	if (!Get(pFields, &pSettings->bUseTSL) ||
+		!Get(pFields, &pSettings->bAutoDownloadTSL) ||
+		!Get(pFields, pSettings->szTSLAddress,
+			sizeof(pSettings->szTSLAddress)))
 	{
 		return FALSE;
 	}

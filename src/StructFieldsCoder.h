@@ -126,6 +126,14 @@ int Decode(
 	PEU_LOG_SETTINGS		pSettings);
 
 int Encode(
+	PEU_TSL_SETTINGS		pSettings,
+	PSTRUCT_FIELDS			pFields);
+
+int Decode(
+	PSTRUCT_FIELDS			pFields,
+	PEU_TSL_SETTINGS		pSettings);
+
+int Encode(
 	PEU_MODE_SETTINGS		pSettings,
 	PSTRUCT_FIELDS			pFields);
 

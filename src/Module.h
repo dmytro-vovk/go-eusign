@@ -23,6 +23,10 @@ unsigned long CtxFreeMemory(
 	void*			pvPrivateKeyContext,
 	unsigned char*	pbMemory);
 
+unsigned long FreeCStrings(
+	char*			*ppszStrings,
+	unsigned long	dwCount);
+
 unsigned long FreeStructFields(
 	char*			*ppszFields,
 	unsigned long	dwFields);
@@ -57,6 +61,19 @@ int IsInitialized();
 
 unsigned long DoesNeedSetSettings(
 	int*			pbDoesNeedSetSettings);
+
+unsigned long SetSettingsFilePathEx(
+	char*			pszSettingsPath,
+	unsigned long	dwRootKey,
+	char*			pszRegPath);
+
+unsigned long GetModeSettings(
+	char*			**pppszSettings,
+	unsigned long	*pdwSettings);
+
+unsigned long SetModeSettings(
+	char			**ppszSettings,
+	unsigned long	dwSettings);
 
 unsigned long GetFileStoreSettings(
 	char*			**pppszSettings,
@@ -139,11 +156,11 @@ unsigned long SetLogSettings(
 	char			**ppszSettings,
 	unsigned long	dwSettings);
 
-unsigned long GetModeSettings(
+unsigned long GetTSLSettings(
 	char*			**pppszSettings,
 	unsigned long	*pdwSettings);
 
-unsigned long SetModeSettings(
+unsigned long SetTSLSettings(
 	char			**ppszSettings,
 	unsigned long	dwSettings);
 
@@ -161,6 +178,10 @@ unsigned long SaveCertificate(
 	unsigned char	*pbCertificate,
 	unsigned long	dwCertificateLength);
 
+unsigned long DeleteCertificate(
+	char*			pszIssuer,
+	char*			pszSerial);
+
 unsigned long SaveCertificates(
 	unsigned char*	pbCertificates,
 	unsigned long	dwCertificatesLength);
@@ -170,6 +191,27 @@ unsigned long SaveCertificatesEx(
 	unsigned long	dwCertificatesLength,
 	unsigned char*	pbTrustedCertificates,
 	unsigned long	dwTrustedCertificatesLength);
+
+unsigned long SaveTSL(
+	unsigned char*	pbTSL,
+	unsigned long	dwTSLLength);
+
+unsigned long EnumCertificatesEx(
+	unsigned long	dwSubjectType,
+	unsigned long	dwSubjectSubType,
+	unsigned long	dwCertKeyType,
+	unsigned long	dwKeyUsage,
+	unsigned long	dwIndex,
+	char*			**pppszInfo,
+	unsigned long	*pdwInfo,
+	unsigned char*	*ppbCertificate,
+	unsigned long*	pdwCertificateLength);
+
+unsigned long GetCertificate(
+	char*			pszIssuer,
+	char*			pszSerial,
+	unsigned char*	*ppbCertificate,
+	unsigned long*	pdwCertificateLength);
 
 unsigned long ParseCertificateEx(
 	unsigned char	*pbCertificate,
@@ -439,6 +481,28 @@ unsigned long CtxSignData(
 	unsigned char*	*ppbSign,
 	unsigned long	*pdwSignLength);
 
+unsigned long CtxAppendSignHashValue(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwSignAlgo,
+	unsigned char*	pbHash,
+	unsigned long	dwHashLength,
+	unsigned char*	pbPreviousSign,
+	unsigned long	dwPreviousSignLength,
+	int				bAppendCert,
+	unsigned char*	*ppbSign,
+	unsigned long	*pdwSignLength);
+
+unsigned long CtxAppendSign(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwSignAlgo,
+	unsigned char*	pbData,
+	unsigned long	dwDataLength,
+	unsigned char*	pbPreviousSign,
+	unsigned long	dwPreviousSignLength,
+	int				bAppendCert,
+	unsigned char*	*ppbSign,
+	unsigned long	*pdwSignLength);
+
 unsigned long CtxCreateSignerEx(
 	void*			pvPrivateKeyContext,
 	unsigned long	dwSignAlgo,
@@ -479,6 +543,19 @@ unsigned long CtxEnvelopData(
 	unsigned long	dwDataLength,
 	unsigned char*	*ppbEnvelopData,
 	unsigned long	*pdwEnvelopedDataLength);
+
+unsigned long CtxEnvelopDataRSA(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwRecipientCerts,
+	unsigned char*	*ppbRecipientCerts,
+	unsigned long*	pdwRecipentCertsLength,
+	unsigned long	dwContentEncAlgoType,
+	int				bSignData,
+	int				bAppendCert,
+	unsigned char*	pbData,
+	unsigned long	dwDataLength,
+	unsigned char*	*ppbEnvelopedData,
+	unsigned long*	pdwEnvelopedDataLength);
 
 unsigned long CtxDevelopData(
 	void*			pvPrivateKeyContext,
@@ -546,6 +623,242 @@ unsigned long CtxCreate(
 
 unsigned long CtxFree(
 	void*			pvContext);
+
+//--------------------------------------------------------------------------------
+
+unsigned long XAdESGetType(
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	unsigned long*	pdwXAdESType);
+
+unsigned long XAdESGetSignsCount(
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	unsigned long*	pdwCount);
+
+unsigned long XAdESGetSignLevel(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	unsigned long*	pdwSignLevel);
+
+unsigned long XAdESGetSignerInfo(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	char*			**pppszInfo,
+	unsigned long	*pdwInfo,
+	unsigned char*	*ppbCertificate,
+	unsigned long*	pdwCertifiacateLength);
+
+unsigned long CtxXAdESGetSignerInfo(
+	void*			pvContext,
+	unsigned long	dwSignIndex,
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	char*			**pppszInfo,
+	unsigned long	*pdwInfo,
+	unsigned char*	*ppbCertificate,
+	unsigned long	*pdwCertifiacateLength);
+
+unsigned long XAdESGetSignTimeInfo(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	char*			**pppszInfo,
+	unsigned long	*pdwInfo);
+
+unsigned long XAdESGetSignReferences(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	char*			**pppszReferences,
+	unsigned long	*pdwReferencesCount);
+
+unsigned long XAdESGetReference(
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	char*			pszReference,
+	unsigned char*	*ppbReference,
+	unsigned long*	pdwReferenceLength);
+
+unsigned long CtxXAdESSignData(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwSignAlgo,
+	unsigned long	dwXAdESType,
+	unsigned long	dwSignLevel,
+	char*			*ppszReferences,
+	unsigned long	dwReferencesCount,
+	unsigned char*	*ppbReferences,
+	unsigned long*	pdwReferencesLength,
+	unsigned char*	*ppbXAdESData,
+	unsigned long*	pdwXAdESDataLength);
+
+unsigned long XAdESVerifyData(
+	char*			*ppszReferences,
+	unsigned long	dwReferencesCount,
+	unsigned char*	*ppbReferences,
+	unsigned long*	pdwReferencesLength,
+	unsigned long	dwSignIndex,
+	unsigned char*	pbXAdESData,
+	unsigned long	dwXAdESDataLength,
+	char*			**pppszSignInfo,
+	unsigned long	*pdwSignInfo);
+
+//--------------------------------------------------------------------------------
+
+unsigned long PDFGetSignType(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbSignedPDFData,
+	unsigned long	dwSignedPDFDataLength,
+	unsigned long*	pdwType);
+
+unsigned long PDFGetSignsCount(
+	unsigned char*	pbSignedPDFData,
+	unsigned long	dwSignedPDFDataLength,
+	unsigned long*	pdwSignsCount);
+
+unsigned long PDFGetSignerInfo(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbSignedPDFData,
+	unsigned long	dwSignedPDFDataLength,
+	char*			**pppszInfo,
+	unsigned long	*pdwInfo,
+	unsigned char*	*ppbCertificate,
+	unsigned long*	pdwCertifiacateLength);
+
+unsigned long CtxPDFGetSignerInfo(
+	void*			pvContext,
+	unsigned long	dwSignIndex,
+	unsigned char*	pbSignedPDFData,
+	unsigned long	dwSignedPDFDataLength,
+	char*			**pppszInfo,
+	unsigned long	*pdwInfo,
+	unsigned char*	*ppbCertificate,
+	unsigned long	*pdwCertifiacateLength);
+
+unsigned long PDFGetSignTimeInfo(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbSignedPDFData,
+	unsigned long	dwSignedPDFDataLength,
+	char*			**pppszInfo,
+	unsigned long	*pdwInfo);
+
+unsigned long CtxPDFSignData(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwSignAlgo,
+	unsigned char*	pbPDFData,
+	unsigned long	dwPDFDataLength,
+	unsigned long	dwSignType,
+	unsigned char*	*ppbSignedPDFData,
+	unsigned long	*pdwSignedPDFDataLength);
+
+unsigned long PDFVerifyData(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbSignedPDFData,
+	unsigned long	dwPDFDataLength,
+	char*			**pppszSignInfo,
+	unsigned long	*pdwSignInfo);
+
+//--------------------------------------------------------------------------------
+
+unsigned long ASiCGetASiCType(
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	unsigned long*	pdwASiCType);
+
+unsigned long ASiCGetSignType(
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	unsigned long*	pdwSignType);
+
+unsigned long ASiCGetSignLevel(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	unsigned long*	pdwSignLevel);
+
+unsigned long ASiCGetSignsCount(
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	unsigned long*	pdwSignsCount);
+
+unsigned long ASiCGetSignerInfo(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	char*			**pppszCertInfo,
+	unsigned long	*pdwCertInfo,
+	unsigned char*	*ppbCertificate,
+	unsigned long	*pdwCertifiacateLength);
+
+unsigned long CtxASiCGetSignerInfo(
+	void*			pvContext,
+	unsigned long	dwSignIndex,
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	char*			**pppszCertInfo,
+	unsigned long	*pdwCertInfo,
+	unsigned char*	*ppbCertificate,
+	unsigned long	*pdwCertifiacateLength);
+
+unsigned long ASiCGetSignTimeInfo(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	char*			**pppszInfo,
+	unsigned long	*pdwInfo);
+
+unsigned long ASiCGetSignReferences(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	char*			**pppszReferences,
+	unsigned long	*pdwReferencesCount);
+
+unsigned long ASiCGetReference(
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	char*			pszReference,
+	unsigned char*	*ppbReference,
+	unsigned long*	pdwReferenceLength);
+
+unsigned long ASiCIsAllContentCovered(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	int*			pbCovered);
+
+unsigned long CtxASiCSignData(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwSignAlgo,
+	unsigned long	dwASiCType,
+	unsigned long	dwSignType,
+	unsigned long	dwSignLevel,
+	char*			*ppszReferences,
+	unsigned long	dwReferencesCount,
+	unsigned char*	*ppbReferencesData,
+	unsigned long*	pdwReferencesDataLength,
+	unsigned char*	*ppbASiCData,
+	unsigned long	*pdwASiCDataLength);
+
+unsigned long CtxASiCAppendSign(
+	void*			pvPrivateKeyContext,
+	unsigned long	dwSignAlgo,
+	unsigned long	dwSignLevel,
+	char*			*ppszReferences,
+	unsigned long	dwReferencesCount,
+	unsigned char*	pbPreviousASiCData,
+	unsigned long	dwPreviousASiCDataLength,
+	unsigned char*	*ppbASiCData,
+	unsigned long	*pdwASiCDataLength);
+
+unsigned long ASiCVerifyData(
+	unsigned long	dwSignIndex,
+	unsigned char*	pbASiCData,
+	unsigned long	dwASiCDataLength,
+	char*			**pppszSignInfo,
+	unsigned long	*pdwSignInfo);
 
 //--------------------------------------------------------------------------------
 

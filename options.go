@@ -4,6 +4,8 @@ import (
 	src "github.com/dmytro-vovk/go-eusign/src"
 )
 
+// Option adjusts library settings. Options run while the package lock is held,
+// so they must not call NewSigner, NewEncrypter or Signer.Finalize.
 type Option func()
 
 func OptionSaveSetting(flag bool) Option {

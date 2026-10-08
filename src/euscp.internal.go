@@ -51,6 +51,10 @@ func cbuf(buf []byte) (
 
 func cbufs(bufs [][]byte) (
 	cSize C.ulong, cBytesArrays **C.uchar, cBytesArraysSizes *C.ulong) {
+	if bufs == nil {
+		return 0, nil, nil
+	}
+
 	cSize = C.ulong(len(bufs))
 	cBytesArrays = (**C.uchar)(C.malloc(
 		C.size_t(unsafe.Sizeof(*cBytesArrays)) * C.size_t(cSize)))
@@ -106,6 +110,10 @@ func cbufsFree(cSize C.ulong,
 
 func cStrings(strings []string) (
 	cStrings **C.char, cSize C.ulong) {
+	if strings == nil {
+		return nil, 0
+	}
+
 	length := len(strings)
 	index := 0
 

@@ -1,12 +1,13 @@
 ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+LINUX_LIB := $(ROOT)src/lib/linux/$(if $(filter aarch64 arm64,$(shell uname -m)),arm,$(if $(filter i386 i686,$(shell uname -m)),32,64))
 
 .PHONY:
 run:
-	LD_LIBRARY_PATH=$(ROOT)internal/src/lib DYLD_LIBRARY_PATH=$(ROOT)internal/src/lib/darwin go run cmd/test.go
+	LD_LIBRARY_PATH=$(LINUX_LIB) DYLD_LIBRARY_PATH=$(ROOT)src/lib/darwin go run cmd/test.go
 
 .PHONY:
 test:
-	LD_LIBRARY_PATH=$(ROOT)internal/src/lib/linux/64 DYLD_LIBRARY_PATH=$(ROOT)internal/src/lib/darwin go test -race -count=3 ./...
+	LD_LIBRARY_PATH=$(LINUX_LIB) DYLD_LIBRARY_PATH=$(ROOT)src/lib/darwin go test -race -count=3 ./...
 
 .PHONY:
 lint:

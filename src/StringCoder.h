@@ -62,6 +62,15 @@ int StringArrayToString(
 	unsigned long		dwCount,
 	char*				*ppszDst);
 
+int StringToStringArray(
+	const char*			pszSrc,
+	char***				pppszDst,
+	unsigned long*		pdwCount);
+
+void FreeStringArray(
+	unsigned long		dwCount,
+	char**				ppszDst);
+
 //================================================================================
 
 #endif // STRING_CODER_H

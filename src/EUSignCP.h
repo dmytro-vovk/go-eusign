@@ -199,7 +199,8 @@ typedef struct
 #define EU_TIME_INFO_VERSION_1			1
 #define EU_TIME_INFO_VERSION			2
 
-#define EU_KEY_MEDIA_DEVICE_INFO_VERSION	1
+#define EU_KEY_MEDIA_DEVICE_INFO_VERSION_1	1
+#define EU_KEY_MEDIA_DEVICE_INFO_VERSION	2
 
 #define EU_SS_SIGN_HASH_RESULT_VERSION	1
 
@@ -352,6 +353,21 @@ typedef struct
 #define EU_LOG_EVENTS_THRESHOLD_PARAMETER			"LogEventsThreshold"
 #define EU_LOG_EVENTS_THRESHOLD_PARAMETER_LENGTH	4
 
+#define EU_FORCE_FAST_HARDWARE_PFX					"ForceFastHardwarePFX"
+#define EU_FORCE_FAST_HARDWARE_PFX_LENGTH			4
+
+#define EU_USE_SLOGIN_PRIVATE_KEY				"UseSLoginPrivateKey"
+#define EU_USE_SLOGIN_PRIVATE_KEY_LENGTH		4
+
+#define EU_ALLOW_INVALID_CRLS				"AllowInvalidCRLs"
+#define EU_ALLOW_INVALID_CRLS_LENGTH		4
+
+#define EU_NO_CA_CERT_STATUS_CHECK			"NoCACertStatusCheck"
+#define EU_NO_CA_CERT_STATUS_CHECK_LENGTH	4
+
+#define EU_DOWNLOAD_CERT_CRL				"DownloadCertCRLs"
+#define EU_DOWNLOAD_CERT_CRL_LENGTH			4
+
 //-----------------------------------------------------------------------------
 
 #define EU_RECIPIENT_APPEND_TYPE_BY_ISSUER_SERIAL	1
@@ -417,6 +433,12 @@ typedef struct
 
 #define EU_USE_COUPLE_PRIVATE_KEY_CONTEXT_PARAMETER	"UseCouplePrivateKey"
 #define EU_USE_COUPLE_PRIVATE_KEY_CONTEXT_PARAMETER_LENGTH	4
+
+#define EU_ENCODE_ECDSA_SIGN_VALUE_CONTEXT_PARAMETER	"EncodeECDSASignValue"
+#define EU_ENCODE_ECDSA_SIGN_VALUE_CONTEXT_PARAMETER_LENGTH	4
+
+#define EU_USE_SLOGIN_PRIVATE_KEY_CONTEXT_PARAMETER			"UseSLoginPrivateKey"
+#define EU_USE_SLOGIN_PRIVATE_KEY_CONTEXT_PARAMETER_LENGTH	4
 
 //-----------------------------------------------------------------------------
 
@@ -612,6 +634,7 @@ typedef struct
 #define EU_CLIENT_CTX_MAX_NAME_LENGTH			63
 #define EU_CLIENT_CTX_MAX_LOGIN_LENGTH			31
 #define EU_CLIENT_CTX_MAX_IP_ADDRESS_LENGTH		15
+#define EU_CLIENT_CTX_MAX_DATA_LABEL_LENGTH		64
 
 #define EU_CLIENT_CTX_TYPE_ADMINISTRATOR		1
 #define EU_CLIENT_CTX_TYPE_OPERATOR				2
@@ -1060,6 +1083,12 @@ typedef struct
 {
 	unsigned long		dwVersion;
 	char*		pszDeviceNameAlias;
+	int			bDeviceNameAliasAvailable;
+	int			bPasswordAttemptsAvailable;
+	unsigned long		dwLeftPasswordAttempts;
+	unsigned long		dwMaxPasswordAttempts;
+	int			bUAKeysAvailable;
+	int			bUAKeysExists;
 } EU_KEY_MEDIA_DEVICE_INFO, *PEU_KEY_MEDIA_DEVICE_INFO, 
 	**PPEU_KEY_MEDIA_DEVICE_INFO;
 #pragma pack(pop)
@@ -10977,6 +11006,679 @@ unsigned long EUInitializeCertificateStatusCache(
 
 //==============================================================================
 
+typedef unsigned long (*PEU_ASIC_CREATE_SIGNER_BEGIN_EX)(
+	unsigned char*				pbCert,
+	unsigned long				dwCertLength,
+	unsigned long				dwSignAlgo,
+	unsigned long				dwASiCType,
+	unsigned long				dwSignType,
+	char*				pszReferences,
+	unsigned char*				pbPreviousASiCData,
+	unsigned long				dwPreviousASiCDataLength,
+	char*				*ppszSignatureReference,
+	unsigned char*				*ppbAttrsHash,
+	unsigned long*				pdwAttrsHashLength,
+	unsigned char*				*ppbASiCData,
+	unsigned long*				pdwASiCDataLength);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUASiCCreateSignerBeginEx(
+	unsigned char*				pbCert,
+	unsigned long				dwCertLength,
+	unsigned long				dwSignAlgo,
+	unsigned long				dwASiCType,
+	unsigned long				dwSignType,
+	char*				pszReferences,
+	unsigned char*				pbPreviousASiCData,
+	unsigned long				dwPreviousASiCDataLength,
+	char*				*ppszSignatureReference,
+	unsigned char*				*ppbAttrsHash,
+	unsigned long*				pdwAttrsHashLength,
+	unsigned char*				*ppbASiCData,
+	unsigned long*				pdwASiCDataLength);
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
+typedef unsigned long (*PEU_CTX_SERVER_CREATE_COUPLE_SIGN_STEP2_EX)(
+	void*			pvSignContext,
+	unsigned char*			pbClientData,
+	unsigned long			dwClientDataLength,
+	int			bEncodeSignValue,
+	unsigned char*			*ppbSignValue,
+	unsigned long*			pdwSignValueLength);
+#ifdef PC_STATIC_LIBS
+extern "C" unsigned long EUCtxServerCreateCoupleSignStep2Ex(
+	void*			pvSignContext,
+	unsigned char*			pbClientData,
+	unsigned long			dwClientDataLength,
+	int			bEncodeSignValue,
+	unsigned char*			*ppbSignValue,
+	unsigned long*			pdwSignValueLength);
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
+typedef unsigned long (*PEU_CLIENTS_CTX_GET_LABELED_DATA)(
+	void*			pvClientsContext,
+	char*			pszLabel,
+	unsigned char*			*ppbData,
+	unsigned long*			pdwDataLength);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUClientsCtxGetLabeledData(
+	void*			pvClientsContext,
+	char*			pszLabel,
+	unsigned char*			*ppbData,
+	unsigned long*			pdwDataLength);
+#endif //PC_STATIC_LIBS
+
+typedef unsigned long (*PEU_CLIENTS_CTX_SET_LABELED_DATA)(
+	void*			pvClientsContext,
+	char*			pszLabel,
+	unsigned char*			pbData,
+	unsigned long			dwDataLength);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUClientsCtxSetLabeledData(
+	void*			pvClientsContext,
+	char*			pszLabel,
+	unsigned char*			pbData,
+	unsigned long			dwDataLength);
+#endif //PC_STATIC_LIBS
+
+typedef unsigned long (*PEU_CLIENTS_CTX_REMOVE_LABELED_DATA)(
+	void*			pvClientsContext,
+	char*			pszLabel);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUClientsCtxRemoveLabeledData(
+	void*			pvClientsContext,
+	char*			pszLabel);
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
+typedef unsigned long (*PEU_XADES_CREATE_SIGNER_BEGIN)(
+	unsigned char*				pbCert,
+	unsigned long				dwCertLength,
+	unsigned long				dwSignAlgo,
+	unsigned long				dwXAdESType,
+	char*				pszReferences,
+	unsigned char*				*ppbReferences,
+	unsigned long*				pdwReferencesLength,
+	char*				*ppszSignatureReference,
+	unsigned char*				*ppbAttrsHash,
+	unsigned long*				pdwAttrsHashLength,
+	unsigned char*				*ppbXAdESData,
+	unsigned long*				pdwXAdESDataLength);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUXAdESCreateSignerBegin(
+	unsigned char*				pbCert,
+	unsigned long				dwCertLength,
+	unsigned long				dwSignAlgo,
+	unsigned long				dwXAdESType,
+	char*				pszReferences,
+	unsigned char*				*ppbReferences,
+	unsigned long*				pdwReferencesLength,
+	char*				*ppszSignatureReference,
+	unsigned char*				*ppbAttrsHash,
+	unsigned long*				pdwAttrsHashLength,
+	unsigned char*				*ppbXAdESData,
+	unsigned long*				pdwXAdESDataLength);
+#endif //PC_STATIC_LIBS
+
+//-----------------------------------------------------------------------------
+
+typedef unsigned long (*PEU_XADES_CREATE_SIGNER_END)(
+	unsigned long				dwSignLevel,
+	char*				pszSignatureReference,
+	unsigned char*				pbSignature,
+	unsigned long				dwSignatureLength,
+	unsigned char*				pbPreviousXAdESData,
+	unsigned long				dwPreviousXAdESDataLength,
+	unsigned char*				*ppbXAdESData,
+	unsigned long*				pdwXAdESDataLength);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUXAdESCreateSignerEnd(
+	unsigned long				dwSignLevel,
+	char*				pszSignatureReference,
+	unsigned char*				pbSignature,
+	unsigned long				dwSignatureLength,
+	unsigned char*				pbPreviousXAdESData,
+	unsigned long				dwPreviousXAdESDataLength,
+	unsigned char*				*ppbXAdESData,
+	unsigned long*				pdwXAdESDataLength);
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
+typedef unsigned long (*PEU_ASIC_REMOVE_SIGN)(
+	unsigned long				dwSignIndex,
+	unsigned char*				pbPreviousASiCData,
+	unsigned long				dwPreviousASiCDataLength,
+	unsigned char*				*ppbASiCData,
+	unsigned long*				pdwASiCDataLength);
+#ifdef PC_STATIC_LIBS
+extern "C" unsigned long EUASiCRemoveSign(
+	unsigned long				dwSignIndex,
+	unsigned char*				pbPreviousASiCData,
+	unsigned long				dwPreviousASiCDataLength,
+	unsigned char*				*ppbASiCData,
+	unsigned long*				pdwASiCDataLength);
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
+typedef unsigned long (*PEU_CTX_ENVELOP_DATA_WITH_SETTINGS_EX)(
+	void*			pvPrivateKeyContext,
+	unsigned long			dwContentEncAlgoType,
+	unsigned long			dwRecipientCerts,
+	unsigned char*			*ppbRecipientCerts,
+	unsigned long*			pdwRecipientCertsLength,
+	unsigned long			dwRecipientAppendType,
+	int			bCheckRecipientCertsOffline,
+	int			bCheckRecipientCertsNoCRL,
+	int			bNoRecipientCertsCertCheck,
+	int			bSignData,
+	int			bNoTSP,
+	int			bAppendCert,
+	unsigned char*			pbData,
+	unsigned long			dwDataLength,
+	unsigned char*			*ppbEnvelopedData,
+	unsigned long*			pdwEnvelopedDataLength);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUCtxEnvelopDataWithSettingsEx(
+	void*			pvPrivateKeyContext,
+	unsigned long			dwContentEncAlgoType,
+	unsigned long			dwRecipientCerts,
+	unsigned char*			*ppbRecipientCerts,
+	unsigned long*			pdwRecipientCertsLength,
+	unsigned long			dwRecipientAppendType,
+	int			bCheckRecipientCertsOffline,
+	int			bCheckRecipientCertsNoCRL,
+	int			bNoRecipientCertsCertCheck,
+	int			bSignData,
+	int			bNoTSP,
+	int			bAppendCert,
+	unsigned char*			pbData,
+	unsigned long			dwDataLength,
+	unsigned char*			*ppbEnvelopedData,
+	unsigned long*			pdwEnvelopedDataLength);
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
+typedef unsigned long (*PEU_APPEND_TRANSPORT_HEADER_EX)(
+	char*				pszCAType,
+	const char*				pszProgramName,
+	const char*				pszProgramVersion,
+	PSYSTEMTIME			pSendDate,
+	char*				pszFileName,
+	char*				pszClientEMail,
+	unsigned char*				pbClientCert,
+	unsigned long				dwClientCertLength,
+	unsigned char*				pbCryptoData,
+	unsigned long				dwCryptoDataLength,
+	unsigned char*				*ppbTransportData,
+	unsigned long*				pdwTransportDataLength);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUAppendTransportHeaderEx(
+	char*				pszCAType,
+	const char*				pszProgramName,
+	const char*				pszProgramVersion,
+	PSYSTEMTIME			pSendDate,
+	char*				pszFileName,
+	char*				pszClientEMail,
+	unsigned char*				pbClientCert,
+	unsigned long				dwClientCertLength,
+	unsigned char*				pbCryptoData,
+	unsigned long				dwCryptoDataLength,
+	unsigned char*				*ppbTransportData,
+	unsigned long*				pdwTransportDataLength);
+#endif //PC_STATIC_LIBS
+
+//----------------------------------------------------------------------------
+
+typedef unsigned long (*PEU_APPEND_FILE_TRANSPORT_HEADER_EX)(
+	char*				pszCAType,
+	const char*				pszProgramName,
+	const char*				pszProgramVersion,
+	PSYSTEMTIME			pSendDate,
+	char*				pszFileName,
+	char*				pszClientEMail,
+	unsigned char*				pbClientCert,
+	unsigned long				dwClientCertLength,
+	char*				pszFileWithCryptoData,
+	char*				pszFileWithTransportData);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUAppendFileTransportHeaderEx(
+	char*				pszCAType,
+	const char*				pszProgramName,
+	const char*				pszProgramVersion,
+	PSYSTEMTIME			pSendDate,
+	char*				pszFileName,
+	char*				pszClientEMail,
+	unsigned char*				pbClientCert,
+	unsigned long				dwClientCertLength,
+	char*				pszFileWithCryptoData,
+	char*				pszFileWithTransportData);
+#endif //PC_STATIC_LIBS
+
+//=============================================================================
+
+typedef unsigned long (*PEU_DOWNLOAD_FILE_VIA_HTTP_EX)(
+	char*			pszURL,
+	char*			pszHeaders,
+	char*			pszFileName,
+	unsigned char*			*ppbFile,
+	unsigned long*			pdwFileLength);
+#ifdef PC_STATIC_LIBS
+extern "C" unsigned long EUDownloadFileViaHTTPEx(
+	char*			pszURL,
+	char*			pszHeaders,
+	char*			pszFileName,
+	unsigned char*			*ppbFile,
+	unsigned long*			pdwFileLength);
+#endif //PC_STATIC_LIBS
+
+//=============================================================================
+
+typedef unsigned long (*PEU_CTX_DESTROY_NAMED_PRIVATE_KEY2)(
+	void*				pvPrivateKeyContext,
+	char*				pszNamedPrivateKeyLabel);
+#ifdef PC_STATIC_LIBS
+extern "C" unsigned long EUCtxDestroyNamedPrivateKey2(
+	void*				pvPrivateKeyContext,
+	char*				pszNamedPrivateKeyLabel);
+#endif //PC_STATIC_LIBS
+
+//=============================================================================
+
+typedef unsigned long (*PEU_MAKE_NEW_CERTIFICATE_EX)(
+	PEU_KEY_MEDIA		pOldKeyMedia,
+	unsigned char*				pbOldPrivateKey,
+	unsigned long				dwOldPrivateKeyLength,
+	char*				pszOldPrivateKeyPassword,
+	unsigned long				dwUAKeysType,
+	unsigned long				dwUADSKeysSpec,
+	int				bUseUADSKeyAsKEP,
+	unsigned long				dwUAKEPKeysSpec,
+	char*				pszUAParamsPath,
+	unsigned long				dwInternationalKeysType,
+	unsigned long				dwRSAKeysSpec,
+	char*				pszRSAParamsPath,
+	unsigned long				dwECDSAKeysSpec,
+	char*				pszECDSAParamsPath,
+	PEU_KEY_MEDIA		pNewKeyMedia,
+	char*				pszNewPrivateKeyPassword,
+	unsigned char*				*ppbNewPrivateKey,
+	unsigned long*				pdwNewPrivateKeyLength,
+	unsigned char*				*ppbUACert,
+	unsigned long*				pdwUACertLength,
+	unsigned char*				*ppbUAKEPCert,
+	unsigned long*				pdwUAKEPCertLength,
+	unsigned char*				*ppbRSACert,
+	unsigned long*				pdwRSACertLength,
+	unsigned char*				*ppbECDSACert,
+	unsigned long*				pdwECDSACertLength,
+	unsigned char*				*ppbCMPRequest,
+	unsigned long*				pdwCMPRequestLength);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUMakeNewCertificateEx(
+	PEU_KEY_MEDIA		pOldKeyMedia,
+	unsigned char*				pbOldPrivateKey,
+	unsigned long				dwOldPrivateKeyLength,
+	char*				pszOldPrivateKeyPassword,
+	unsigned long				dwUAKeysType,
+	unsigned long				dwUADSKeysSpec,
+	int				bUseUADSKeyAsKEP,
+	unsigned long				dwUAKEPKeysSpec,
+	char*				pszUAParamsPath,
+	unsigned long				dwInternationalKeysType,
+	unsigned long				dwRSAKeysSpec,
+	char*				pszRSAParamsPath,
+	unsigned long				dwECDSAKeysSpec,
+	char*				pszECDSAParamsPath,
+	PEU_KEY_MEDIA		pNewKeyMedia,
+	char*				pszNewPrivateKeyPassword,
+	unsigned char*				*ppbNewPrivateKey,
+	unsigned long*				pdwNewPrivateKeyLength,
+	unsigned char*				*ppbUACert,
+	unsigned long*				pdwUACertLength,
+	unsigned char*				*ppbUAKEPCert,
+	unsigned long*				pdwUAKEPCertLength,
+	unsigned char*				*ppbRSACert,
+	unsigned long*				pdwRSACertLength,
+	unsigned char*				*ppbECDSACert,
+	unsigned long*				pdwECDSACertLength,
+	unsigned char*				*ppbCMPRequest,
+	unsigned long*				pdwCMPRequestLength);
+#endif //PC_STATIC_LIBS
+
+//----------------------------------------------------------------------------
+
+typedef unsigned long (*PEU_CTX_MAKE_NEW_OWN_CERTIFICATE_EX)(
+	void*				pvPrivateKeyContext,
+	unsigned long				dwUAKeysType,
+	unsigned long				dwUADSKeysSpec,
+	int				bUseUADSKeyAsKEP,
+	unsigned long				dwUAKEPKeysSpec,
+	char*				pszUAParamsPath,
+	unsigned long				dwInternationalKeysType,
+	unsigned long				dwRSAKeysSpec,
+	char*				pszRSAParamsPath,
+	unsigned long				dwECDSAKeysSpec,
+	char*				pszECDSAParamsPath,
+	unsigned char*				*ppbUACert,
+	unsigned long*				pdwUACertLength,
+	unsigned char*				*ppbUAKEPCert,
+	unsigned long*				pdwUAKEPCertLength,
+	unsigned char*				*ppbRSACert,
+	unsigned long*				pdwRSACertLength,
+	unsigned char*				*ppbECDSACert,
+	unsigned long*				pdwECDSACertLength,
+	unsigned char*				*ppbCMPRequest,
+	unsigned long*				pdwCMPRequestLength);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUCtxMakeNewOwnCertificateEx(
+	void*				pvPrivateKeyContext,
+	unsigned long				dwUAKeysType,
+	unsigned long				dwUADSKeysSpec,
+	int				bUseUADSKeyAsKEP,
+	unsigned long				dwUAKEPKeysSpec,
+	char*				pszUAParamsPath,
+	unsigned long				dwInternationalKeysType,
+	unsigned long				dwRSAKeysSpec,
+	char*				pszRSAParamsPath,
+	unsigned long				dwECDSAKeysSpec,
+	char*				pszECDSAParamsPath,
+	unsigned char*				*ppbUACert,
+	unsigned long*				pdwUACertLength,
+	unsigned char*				*ppbUAKEPCert,
+	unsigned long*				pdwUAKEPCertLength,
+	unsigned char*				*ppbRSACert,
+	unsigned long*				pdwRSACertLength,
+	unsigned char*				*ppbECDSACert,
+	unsigned long*				pdwECDSACertLength,
+	unsigned char*				*ppbCMPRequest,
+	unsigned long*				pdwCMPRequestLength);
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
+typedef unsigned long (*PEU_GET_RUNTIME_PARAMETER)(
+	char*				pszParameterName,
+	void*				pvParameterValue,
+	unsigned long				dwParameterValueLength);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUGetRuntimeParameter(
+	char*				pszParameterName,
+	void*				pvParameterValue,
+	unsigned long				dwParameterValueLength);
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
+typedef unsigned long (*PEU_GET_SIGNER_ISSUER_AND_SERIAL)(
+	unsigned long			dwSignIndex,
+	char*			pszSign,
+	unsigned char*			pbSign,
+	unsigned long			dwSignLength,
+	char*			*ppszSignerIssuer,
+	char*			*ppszSignerSerial);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUGetSignerIssuerAndSerial(
+	unsigned long			dwSignIndex,
+	char*			pszSign,
+	unsigned char*			pbSign,
+	unsigned long			dwSignLength,
+	char*			*ppszSignerIssuer,
+	char*			*ppszSignerSerial);
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
+typedef unsigned long (*PEU_CTX_CREATE_SIGNER_BEGIN)(
+	void*				pvContext,
+	unsigned long				dwSignAlgo,
+	unsigned char*				pbSignerCert,
+	unsigned long				dwSignerCertLength,
+	unsigned char*				pbHash,
+	unsigned long				dwHashLength,
+	int				bNoSigningTime,
+	int				bNoContentTimeStamp,
+	unsigned char*				*ppbSigner,
+	unsigned long*				pdwSignerLength,
+	unsigned char*				*ppbAttrsHash,
+	unsigned long*				pdwAttrsHashLength);
+#ifdef PC_STATIC_LIBS
+extern "C" unsigned long EUCtxCreateSignerBegin(
+	void*				pvContext,
+	unsigned long				dwSignAlgo,
+	unsigned char*				pbSignerCert,
+	unsigned long				dwSignerCertLength,
+	unsigned char*				pbHash,
+	unsigned long				dwHashLength,
+	int				bNoSigningTime,
+	int				bNoContentTimeStamp,
+	unsigned char*				*ppbSigner,
+	unsigned long*				pdwSignerLength,
+	unsigned char*				*ppbAttrsHash,
+	unsigned long*				pdwAttrsHashLength);
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
+typedef unsigned long (*PEU_CREATE_CR_BEGIN)(
+	unsigned char*			pbSubjPubKeyInfo,
+	unsigned long			dwSubjPubKeyInfoLength,
+	unsigned long			dwHashAlgo,
+	unsigned char*			*ppbRequest,
+	unsigned long*			pdwRequestLength,
+	unsigned char*			*ppbAttrsHash,
+	unsigned long*			pdwAttrsHashLength);
+#ifdef PC_STATIC_LIBS
+extern "C" unsigned long EUCreateCRBegin(
+	unsigned char*			pbSubjPubKeyInfo,
+	unsigned long			dwSubjPubKeyInfoLength,
+	unsigned long			dwHashAlgo,
+	unsigned char*			*ppbRequest,
+	unsigned long*			pdwRequestLength,
+	unsigned char*			*ppbAttrsHash,
+	unsigned long*			pdwAttrsHashLength);
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
+typedef unsigned long (*PEU_READ_PRIVATE_KEY_CANCEL)();
+#ifdef PC_STATIC_LIBS
+extern "C" unsigned long EUReadPrivateKeyCancel();
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
+typedef unsigned long (*PEU_GET_DATA_HASH_FROM_SIGNED_DATA_EX)(
+	unsigned long			dwSignIndex,
+	char*			pszSign,
+	unsigned char*			pbSign,
+	unsigned long			dwSignLength,
+	unsigned long*			pdwHashAlgo,
+	char*			*ppszHash,
+	unsigned char*			*ppbHash,
+	unsigned long*			pdwHashLength);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUGetDataHashFromSignedDataEx(
+	unsigned long			dwSignIndex,
+	char*			pszSign,
+	unsigned char*			pbSign,
+	unsigned long			dwSignLength,
+	unsigned long*			pdwHashAlgo,
+	char*			*ppszHash,
+	unsigned char*			*ppbHash,
+	unsigned long*			pdwHashLength);
+#endif //PC_STATIC_LIBS
+
+typedef unsigned long (*PEU_GET_DATA_HASH_FROM_SIGNED_FILE_EX)(
+	unsigned long			dwSignIndex,
+	char*			pszFileNameWithSignedData,
+	unsigned long*			pdwHashAlgo,
+	char*			*ppszHash,
+	unsigned char*			*ppbHash,
+	unsigned long*			pdwHashLength);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUGetDataHashFromSignedFileEx(
+	unsigned long			dwSignIndex,
+	char*			pszFileNameWithSignedData,
+	unsigned long*			pdwHashAlgo,
+	char*			*ppszHash,
+	unsigned char*			*ppbHash,
+	unsigned long*			pdwHashLength);
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
+typedef unsigned long (*PEU_ENVELOP_DATA_TO_RECIPIENTS_WITH_SETTINGS_2)(
+	int			bUseDynamicKey,
+	unsigned long			dwContentEncAlgoType,
+	unsigned long			dwRecipientCerts,
+	unsigned char*			*ppbRecipientCerts,
+	unsigned long*			pdwRecipientCertsLength,
+	unsigned long			dwRecipientAppendType,
+	int			bCheckRecipientCertsOffline,
+	int			bCheckRecipientCertsNoCRL,
+	int			bNoRecipientCertsCertCheck,
+	int			bSignData,
+	int			bNoTSP,
+	int			bAppendCert,
+	unsigned char*			pbData,
+	unsigned long			dwDataLength,
+	char*			*ppszEnvelopedData,
+	unsigned char*			*ppbEnvelopedData,
+	unsigned long*			pdwEnvelopedDataLength);
+#ifdef PC_STATIC_LIBS
+extern "C" unsigned long EUEnvelopDataToRecipientsWithSettings2(
+	int			bUseDynamicKey,
+	unsigned long			dwContentEncAlgoType,
+	unsigned long			dwRecipientCerts,
+	unsigned char*			*ppbRecipientCerts,
+	unsigned long*			pdwRecipientCertsLength,
+	unsigned long			dwRecipientAppendType,
+	int			bCheckRecipientCertsOffline,
+	int			bCheckRecipientCertsNoCRL,
+	int			bNoRecipientCertsCertCheck,
+	int			bSignData,
+	int			bNoTSP,
+	int			bAppendCert,
+	unsigned char*			pbData,
+	unsigned long			dwDataLength,
+	char*			*ppszEnvelopedData,
+	unsigned char*			*ppbEnvelopedData,
+	unsigned long*			pdwEnvelopedDataLength);
+#endif //PC_STATIC_LIBS
+
+typedef unsigned long (*PEU_CTX_ENVELOP_DATA_WITH_SETTINGS_2)(
+	void*			pvPrivateKeyContext,
+	int			bUseDynamicKey,
+	unsigned long			dwContentEncAlgoType,
+	unsigned long			dwRecipientCerts,
+	unsigned char*			*ppbRecipientCerts,
+	unsigned long*			pdwRecipientCertsLength,
+	unsigned long			dwRecipientAppendType,
+	int			bCheckRecipientCertsOffline,
+	int			bCheckRecipientCertsNoCRL,
+	int			bNoRecipientCertsCertCheck,
+	int			bSignData,
+	int			bNoTSP,
+	int			bAppendCert,
+	unsigned char*			pbData,
+	unsigned long			dwDataLength,
+	unsigned char*			*ppbEnvelopedData,
+	unsigned long*			pdwEnvelopedDataLength);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUCtxEnvelopDataWithSettings2(
+	void*			pvPrivateKeyContext,
+	int			bUseDynamicKey,
+	unsigned long			dwContentEncAlgoType,
+	unsigned long			dwRecipientCerts,
+	unsigned char*			*ppbRecipientCerts,
+	unsigned long*			pdwRecipientCertsLength,
+	unsigned long			dwRecipientAppendType,
+	int			bCheckRecipientCertsOffline,
+	int			bCheckRecipientCertsNoCRL,
+	int			bNoRecipientCertsCertCheck,
+	int			bSignData,
+	int			bNoTSP,
+	int			bAppendCert,
+	unsigned char*			pbData,
+	unsigned long			dwDataLength,
+	unsigned char*			*ppbEnvelopedData,
+	unsigned long*			pdwEnvelopedDataLength);
+#endif //PC_STATIC_LIBS
+
+
+//==============================================================================
+
+typedef unsigned long (*PEU_SSERVER_CLIENT_GET_ACCESS_TOKEN_ASYNC)(
+	char*				pszServerAddress,
+	char*				pszServerPort,
+	char*				pszClientID,
+	char*				pszOriginatorDescription,
+	char*				pszOperationDescription,
+	char*				pszType,
+	char*				pszAuthType,
+	char*				pszAuthDocsTypes,
+	char*				*ppszOperationID,
+	char*				*ppszDeeplink,
+	PSYSTEMTIME			pExpireTime);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUSServerClientGetAccessTokenAsync(
+	char*				pszServerAddress,
+	char*				pszServerPort,
+	char*				pszClientID,
+	char*				pszOriginatorDescription,
+	char*				pszOperationDescription,
+	char*				pszType,
+	char*				pszAuthType,
+	char*				pszAuthDocTypes,
+	char*				*ppszOperationID,
+	char*				*ppszDeeplink,
+	PSYSTEMTIME			pExpireTime);
+#endif //PC_STATIC_LIBS
+
+//------------------------------------------------------------------------------
+
+typedef unsigned long (*PEU_SSERVER_CLIENT_CHECK_GET_ACCESS_TOKEN_STATUS)(
+	char*				pszServerAddress,
+	char*				pszServerPort,
+	char*				pszClientID,
+	char*				pszOperationID,
+	char*				*ppszToken);
+#ifdef PC_STATIC_LIBS
+extern "C"
+unsigned long EUSServerClientCheckGetAccessTokenStatus(
+	char*				pszServerAddress,
+	char*				pszServerPort,
+	char*				pszClientID,
+	char*				pszOperationID,
+	char*				*ppszToken);
+#endif //PC_STATIC_LIBS
+
+//==============================================================================
+
 typedef struct
 {
 	PEU_INITIALIZE				Initialize;
@@ -12016,11 +12718,80 @@ typedef struct
 
 	PEU_INITIALIZE_CERTIFICATE_STATUS_CACHE
 								InitializeCertificateStatusCache;
+
+	PEU_ASIC_CREATE_SIGNER_BEGIN_EX
+								ASiCCreateSignerBeginEx;
+
+	PEU_CTX_SERVER_CREATE_COUPLE_SIGN_STEP2_EX
+								CtxServerCreateCoupleSignStep2Ex;
+
+	PEU_CLIENTS_CTX_GET_LABELED_DATA
+								ClientsCtxGetLabeledData;
+	PEU_CLIENTS_CTX_SET_LABELED_DATA
+								ClientsCtxSetLabeledData;
+	PEU_CLIENTS_CTX_REMOVE_LABELED_DATA
+								ClientsCtxRemoveLabeledData;
+
+	PEU_XADES_CREATE_SIGNER_BEGIN
+								XAdESCreateSignerBegin;
+	PEU_XADES_CREATE_SIGNER_END	XAdESCreateSignerEnd;
+
+	PEU_ASIC_REMOVE_SIGN		ASiCRemoveSign;
+
+	PEU_CTX_ENVELOP_DATA_WITH_SETTINGS_EX
+								CtxEnvelopDataWithSettingsEx;
+
+	PEU_APPEND_TRANSPORT_HEADER_EX
+								AppendTransportHeaderEx;
+	PEU_APPEND_FILE_TRANSPORT_HEADER_EX
+								AppendFileTransportHeaderEx;
+
+	PEU_DOWNLOAD_FILE_VIA_HTTP_EX
+								DownloadFileViaHTTPEx;
+
+	PEU_CTX_DESTROY_NAMED_PRIVATE_KEY2
+								CtxDestroyNamedPrivateKey2;
+
+	PEU_MAKE_NEW_CERTIFICATE_EX	MakeNewCertificateEx;
+	PEU_CTX_MAKE_NEW_OWN_CERTIFICATE_EX
+								CtxMakeNewOwnCertificateEx;
+
+	PEU_GET_RUNTIME_PARAMETER	GetRuntimeParameter;
+
+	PEU_GET_SIGNER_ISSUER_AND_SERIAL
+								GetSignerIssuerAndSerial;
+
+	PEU_CTX_CREATE_SIGNER_BEGIN
+								CtxCreateSignerBegin;
+
+	PEU_CREATE_CR_BEGIN			CreateCRBegin;
+
+	PEU_READ_PRIVATE_KEY_CANCEL	ReadPrivateKeyCancel;
+
+	PEU_GET_DATA_HASH_FROM_SIGNED_DATA_EX
+								GetDataHashFromSignedDataEx;
+	PEU_GET_DATA_HASH_FROM_SIGNED_FILE_EX
+								GetDataHashFromSignedFileEx;
+
+	PEU_ENVELOP_DATA_TO_RECIPIENTS_WITH_SETTINGS_2
+								EnvelopDataToRecipientsWithSettings2;
+	PEU_CTX_ENVELOP_DATA_WITH_SETTINGS_2
+								CtxEnvelopDataWithSettings2;
+
+	PEU_SSERVER_CLIENT_GET_ACCESS_TOKEN_ASYNC
+								SServerClientGetAccessTokenAsync;
+	PEU_SSERVER_CLIENT_CHECK_GET_ACCESS_TOKEN_STATUS
+								SServerClientCheckGetAccessTokenStatus;
 } EU_INTERFACE, *PEU_INTERFACE;
 
 //=============================================================================
 
+// go-eusign: IIT ships separate Linux/macOS headers that differ only here.
+#ifdef __APPLE__
+#define EU_LIBRARY_NAME		"euscp.dylib"
+#else
 #define EU_LIBRARY_NAME		"euscp.so"
+#endif
 
 //=============================================================================
 

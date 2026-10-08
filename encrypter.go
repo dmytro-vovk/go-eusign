@@ -15,10 +15,11 @@ type Encrypter struct {
 }
 
 func NewEncrypter(algo int) (*Encrypter, error) {
-	if !src.IsInitialized() {
-		if err := wrapError(src.Initialize()); err != nil {
-			return nil, fmt.Errorf("initialize: %w", err)
-		}
+	m.Lock()
+	defer m.Unlock()
+
+	if err := initialize(); err != nil {
+		return nil, err
 	}
 
 	if err := wrapError(src.SetLogSettings(&src.LogSettings{
@@ -42,14 +43,15 @@ func NewEncrypter(algo int) (*Encrypter, error) {
 	}
 
 	runtime.AddCleanup(e, func(ctx *src.AlgoContext) {
-		_ = src.AlgoCtxFree(ctx)
-		_ = src.Finalize()
+		_ = src.AlgoCtxFree(ctx) // the library itself stays loaded until Signer.Finalize
 	}, e.ctx)
 
 	return e, nil
 }
 
 func (e *Encrypter) GetDataMAC(data []byte, algo int) ([]byte, error) {
+	defer runtime.KeepAlive(e) // e.ctx is freed by a cleanup on e
+
 	if len(data) == 0 {
 		return nil, errors.New("empty data")
 	}
@@ -69,6 +71,8 @@ func (e *Encrypter) GetDataMAC(data []byte, algo int) ([]byte, error) {
 }
 
 func (e *Encrypter) GetKey() ([]byte, []byte, error) {
+	defer runtime.KeepAlive(e) // e.ctx is freed by a cleanup on e
+
 	key, iv, err := src.AlgoCtxGetKey(e.ctx)
 	if err := wrapError(err); err != nil {
 		return nil, nil, fmt.Errorf("get key: %w", err)
@@ -78,6 +82,8 @@ func (e *Encrypter) GetKey() ([]byte, []byte, error) {
 }
 
 func (e *Encrypter) Encrypt(data []byte, algo int) ([]byte, []byte, error) {
+	defer runtime.KeepAlive(e) // e.ctx is freed by a cleanup on e
+
 	mac, err := e.GetDataMAC(data, algo)
 	if err != nil {
 		return nil, nil, fmt.Errorf("get data MAC: %w", err)
@@ -92,6 +98,8 @@ func (e *Encrypter) Encrypt(data []byte, algo int) ([]byte, []byte, error) {
 }
 
 func (e *Encrypter) Decrypt(data []byte /*, mac, key, iv []byte*/) ([]byte, error) {
+	defer runtime.KeepAlive(e) // e.ctx is freed by a cleanup on e
+
 	// if err := wrapError(src.AlgoCtxSetKey(e.ctx, key, iv)); err != nil {
 	// 	return nil, fmt.Errorf("set key: %w", err)
 	// }
