@@ -82,9 +82,10 @@ const (
 
 // Parameters
 const (
-	ResolveOIDsOIDSParameter = "ResolveOIDs"
-	SaveSettingsParameter    = "SaveSettings"
-	SignType                 = "SignType"
+	ResolveOIDsOIDSParameter    = "ResolveOIDs"
+	SaveSettingsParameter       = "SaveSettings"
+	SignType                    = "SignType"
+	ConnectionsTimeoutParameter = "ConnectionsTimeout"
 )
 
 // General settings

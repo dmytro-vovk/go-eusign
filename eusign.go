@@ -2,6 +2,7 @@ package eusign
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -18,6 +19,11 @@ type Signer struct {
 var (
 	m               sync.Mutex
 	defaultsApplied bool // guarded by m; reset whenever the library is (re)initialized
+
+	// inFlight tracks CMP requests that may outlive the LoadPrivateKey call that
+	// started them. Add is called with m held; configure and finalize wait for
+	// them (also with m held) before touching process-global library state.
+	inFlight sync.WaitGroup
 )
 
 // NewSigner configures process-global library settings, so it holds m throughout.
@@ -60,8 +66,12 @@ func NewSigner(casFile, caCertFile string, options ...Option) (*Signer, error) {
 	return &Signer{cas: cas}, err
 }
 
-// initialize loads the library if needed. Must be called with m held.
+// initialize loads the library if needed, after background CMP requests have
+// finished so callers can safely change process-global settings. Must be
+// called with m held.
 func initialize() error {
+	inFlight.Wait()
+
 	if src.IsInitialized() {
 		return nil
 	}
@@ -75,10 +85,13 @@ func initialize() error {
 	return nil
 }
 
-// finalize unloads the library.
+// finalize unloads the library once background CMP requests (each bounded by
+// ConnectionsTimeout) have finished.
 func finalize() error {
 	m.Lock()
 	defer m.Unlock()
+
+	inFlight.Wait()
 
 	defaultsApplied = false
 
@@ -112,6 +125,11 @@ func configure(options []Option) error {
 func applyDefaults() error {
 	if err := wrapError(src.SetRuntimeParameterInt(src.SaveSettingsParameter, src.SettingsIDNone)); err != nil {
 		return fmt.Errorf("set save settings parameter: %w", err)
+	}
+
+	// ConnectionsTimeout is in milliseconds.
+	if err := wrapError(src.SetRuntimeParameterInt(src.ConnectionsTimeoutParameter, int(DefaultConnectionsTimeout.Milliseconds()))); err != nil {
+		return fmt.Errorf("set connections timeout: %w", err)
 	}
 
 	if err := wrapError(src.SetFileStoreSettings(&src.FileStoreSettings{ExpireTime: 3600})); err != nil {
@@ -202,6 +220,65 @@ func (s *Signer) Hash(data []byte, algo HashAlgo) ([]byte, error) {
 	return hash, nil
 }
 
+// findPrivateKeyCertificate asks every CA's CMP server in parallel and returns
+// the first certificate found. Each request is bounded by the library's
+// ConnectionsTimeout; requests still in flight after the first success finish
+// in the background (Finalize waits for them). If no CA has the certificate,
+// the per-CA errors are joined.
+func (s *Signer) findPrivateKeyCertificate(info []byte) ([]byte, error) {
+	type result struct {
+		addr  string
+		certs []byte
+		err   error
+	}
+
+	results := make(chan result, len(s.cas)) // buffered: late senders never block
+
+	var addrs []string
+
+	for _, ca := range s.cas {
+		if ca.CmpAddress != "" {
+			addrs = append(addrs, ca.CmpAddress)
+		}
+	}
+
+	m.Lock()
+	inFlight.Add(len(addrs))
+	m.Unlock()
+
+	for _, addr := range addrs {
+		go func() {
+			defer inFlight.Done()
+
+			certs, err := wrapError2(src.GetCertificatesByKeyInfo(info, []string{addr}, []string{"80"}))
+			results <- result{addr: addr, certs: certs, err: err}
+		}()
+	}
+
+	errs := make([]error, 0, len(addrs))
+
+	for range addrs {
+		r := <-results
+		if r.err == nil && len(r.certs) > 0 {
+			log.Printf("Got private key certificate from %s", r.addr)
+
+			return r.certs, nil
+		}
+
+		if r.err == nil {
+			r.err = errors.New("empty response")
+		}
+
+		errs = append(errs, fmt.Errorf("%s: %w", r.addr, r.err))
+	}
+
+	if len(errs) == 0 {
+		return nil, errors.New("could not get private key certificate: no CMP servers configured")
+	}
+
+	return nil, fmt.Errorf("could not get private key certificate: %w", errors.Join(errs...))
+}
+
 func (s *Signer) LoadPrivateKey(fileName, password, cn string) ([]byte, *src.CertInfoEx, error) {
 	// Read private key
 
@@ -217,11 +294,7 @@ func (s *Signer) LoadPrivateKey(fileName, password, cn string) ([]byte, *src.Cer
 
 	// Find private key certificate
 
-	var (
-		pkCertsCMP []byte
-		wg         sync.WaitGroup
-		m          sync.Mutex
-	)
+	var pkCertsCMP []byte
 
 	if cn != "" {
 		for _, ca := range s.cas {
@@ -230,7 +303,7 @@ func (s *Signer) LoadPrivateKey(fileName, password, cn string) ([]byte, *src.Cer
 					if ca.CmpAddress != "" {
 						pkCertsCMP, err = wrapError2(src.GetCertificatesByKeyInfo(info, []string{ca.CmpAddress}, []string{"80"}))
 						if err != nil {
-							return nil, nil, err
+							return nil, nil, fmt.Errorf("get private key certificate from %s: %w", ca.CmpAddress, err)
 						}
 					}
 
@@ -238,40 +311,12 @@ func (s *Signer) LoadPrivateKey(fileName, password, cn string) ([]byte, *src.Cer
 				}
 			}
 		}
-	} else {
-		for _, ca := range s.cas {
-			// if ca.CmpAddress == "" || !strings.Contains(ca.CmpAddress, "test") {
-			// 	continue
-			// }
-
-			wg.Add(1)
-			go func(addr string) {
-				defer wg.Done()
-
-				pkc, err := wrapError2(src.GetCertificatesByKeyInfo(info, []string{addr}, []string{"80"}))
-				if err != nil {
-					// log.Printf("Get private key certificate from %s: %v", addr, err)
-
-					return
-				}
-
-				m.Lock()
-
-				if pkCertsCMP == nil {
-					pkCertsCMP = pkc
-
-					log.Printf("Got private key certificate from %s", addr)
-				}
-
-				m.Unlock()
-			}(ca.CmpAddress)
-		}
-
-		wg.Wait()
+	} else if pkCertsCMP, err = s.findPrivateKeyCertificate(info); err != nil {
+		return nil, nil, err
 	}
 
 	if pkCertsCMP == nil {
-		return nil, nil, fmt.Errorf("could not get private key certificate")
+		return nil, nil, errors.New("could not get private key certificate")
 	}
 
 	var pkCerts [][]byte
