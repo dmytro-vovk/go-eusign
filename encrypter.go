@@ -1,12 +1,17 @@
 package eusign
 
 import (
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"runtime"
+	"slices"
 
 	src "github.com/dmytro-vovk/go-eusign/src"
 )
+
+// ErrInvalidMAC is returned by Encrypter.Decrypt when the MAC does not match.
+var ErrInvalidMAC = errors.New("invalid MAC")
 
 type Encrypter struct {
 	algo         int
@@ -49,7 +54,9 @@ func NewEncrypter(algo int) (*Encrypter, error) {
 	return e, nil
 }
 
-func (e *Encrypter) GetDataMAC(data []byte, algo int) ([]byte, error) {
+// GetDataMAC returns a DSTU 7624 MAC of data, macSize bytes long (one of the
+// src.AlgoDSTU7624_MAC_* constants). It generates the context key on first use.
+func (e *Encrypter) GetDataMAC(data []byte, macSize int) ([]byte, error) {
 	defer runtime.KeepAlive(e) // e.ctx is freed by a cleanup on e
 
 	if len(data) == 0 {
@@ -60,9 +67,11 @@ func (e *Encrypter) GetDataMAC(data []byte, algo int) ([]byte, error) {
 		if err := wrapError(src.AlgoCtxGenerateKey(e.ctx)); err != nil {
 			return nil, fmt.Errorf("generate key: %w", err)
 		}
+
+		e.keyGenerated = true
 	}
 
-	mac, err := src.AlgoCtxGetDataMAC(e.ctx, data, algo)
+	mac, err := src.AlgoCtxGetDataMAC(e.ctx, data, macSize)
 	if err := wrapError(err); err != nil {
 		return nil, fmt.Errorf("get data MAC: %w", err)
 	}
@@ -81,15 +90,19 @@ func (e *Encrypter) GetKey() ([]byte, []byte, error) {
 	return key, iv, nil
 }
 
-func (e *Encrypter) Encrypt(data []byte, algo int) ([]byte, []byte, error) {
+// Encrypt appends a macSize-byte MAC (one of the src.AlgoDSTU7624_MAC_*
+// constants) to data and encrypts the result. It returns the ciphertext and
+// the MAC; data is not modified.
+func (e *Encrypter) Encrypt(data []byte, macSize int) ([]byte, []byte, error) {
 	defer runtime.KeepAlive(e) // e.ctx is freed by a cleanup on e
 
-	mac, err := e.GetDataMAC(data, algo)
+	mac, err := e.GetDataMAC(data, macSize)
 	if err != nil {
 		return nil, nil, fmt.Errorf("get data MAC: %w", err)
 	}
 
-	encrypted, err := wrapError2(src.AlgoCtxEncrypt(e.ctx, append(data, mac...)))
+	// AlgoCtxEncrypt works in place, so encrypt a fresh buffer.
+	encrypted, err := wrapError2(src.AlgoCtxEncrypt(e.ctx, slices.Concat(data, mac)))
 	if err != nil {
 		return nil, nil, fmt.Errorf("encrypt data: %w", err)
 	}
@@ -97,25 +110,36 @@ func (e *Encrypter) Encrypt(data []byte, algo int) ([]byte, []byte, error) {
 	return encrypted, mac, nil
 }
 
-func (e *Encrypter) Decrypt(data []byte /*, mac, key, iv []byte*/) ([]byte, error) {
+// Decrypt reverses Encrypt: it decrypts data, verifies the trailing
+// macSize-byte MAC and returns the plaintext without it. macSize must match
+// the one passed to Encrypt. data is not modified.
+func (e *Encrypter) Decrypt(data []byte, macSize int) ([]byte, error) {
 	defer runtime.KeepAlive(e) // e.ctx is freed by a cleanup on e
 
-	// if err := wrapError(src.AlgoCtxSetKey(e.ctx, key, iv)); err != nil {
-	// 	return nil, fmt.Errorf("set key: %w", err)
-	// }
+	if !e.keyGenerated {
+		return nil, errors.New("no key: call Encrypt first")
+	}
 
-	decrypted, err := src.AlgoCtxDecrypt(e.ctx, data)
+	if macSize <= 0 || len(data) <= macSize {
+		return nil, fmt.Errorf("data is %d bytes, need more than the %d-byte MAC", len(data), macSize)
+	}
+
+	// AlgoCtxDecrypt works in place, so decrypt a copy.
+	decrypted, err := src.AlgoCtxDecrypt(e.ctx, slices.Clone(data))
 	if err := wrapError(err); err != nil {
 		return nil, fmt.Errorf("decrypt data: %w", err)
 	}
 
-	return decrypted, nil
-	//
-	// mac2 := decrypted[len(decrypted)-len(mac):]
-	//
-	// if !bytes.Equal(mac, mac2) {
-	// 	return nil, errors.New("invalid mac")
-	// }
-	//
-	// return decrypted[:len(decrypted)-len(mac)], nil
+	plain, mac := decrypted[:len(decrypted)-macSize], decrypted[len(decrypted)-macSize:]
+
+	expected, err := e.GetDataMAC(plain, macSize)
+	if err != nil {
+		return nil, fmt.Errorf("get data MAC: %w", err)
+	}
+
+	if subtle.ConstantTimeCompare(mac, expected) != 1 {
+		return nil, ErrInvalidMAC
+	}
+
+	return plain, nil
 }
